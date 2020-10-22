@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Football test</title>
+    <meta charset="utf-8" />
+    <meta name="Description" content="Football test" />
+    <base href=”/”>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"
+    ></script>
+
+    <style>
+      body {
+        background: hsl(0, 0%, 90%);
+        display: flex;
+        min-height: 98vh;
+        flex-direction: column;
+      }
+      .container {
+        /*flex: 1;*/
+        padding: 2px 16px;
+        align-items: center;
+        display: flex;
+        justify-content: center;
+      }
+      #pitch {
+        border: 1px solid #000;
+        /*background-image: url("images\\pitch.jpg");
+        background-repeat: no-repeat;
+        */
+        background-color: white;
+        height: 500px;
+        flex-grow: 1;
+        text-align: center;
+        vertical-align: middle;
+      }
+      #pitch td {
+        border: 1px solid #aaaaaa;
+        min-width: 10px;
+        text-align: center;
+      }
+      #bottom {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+      }
+      #drawHolder,
+      #handHolder,
+      #discardHolder {
+        text-align: center;
+      }
+      .card {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        width: 150px;
+        display: inline-block;
+        background: #fff;
+        margin-left: 10px;
+        margin-right: 10px;
+        cursor: pointer;
+        position: relative;
+        transition: top ease 0.5s;
+      }
+      .draw:hover,
+      .hand:hover,
+      .discard:hover {
+        box-shadow: 0px 0px 14px 0px cyan;
+      }
+      .hand:hover {
+        top: -10px;
+      }
+      img {
+        -webkit-user-drag: none;
+      }
+      .endTurn {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0;
+      }
+      .endButton {
+        padding: 5px;
+        margin: 20px;
+        width: 150px;
+        text-align: center;
+        background: deepskyblue;
+      }
+      .scoreHolder {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: center;
+        list-style: none;
+        margin: 0;
+        background: deepskyblue;
+      }
+
+      .scoreHolder li {
+        text-decoration: none;
+        display: block;
+        padding: 1em;
+      }
+
+      .scoreHolder li:hover {
+        background: #1565c0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <ul class="scoreHolder">
+      <li id="playerTeamName">Team X</li>
+      <li id="playerScore">0</li>
+      <li id="cpuScore">0</li>
+      <li id="cpuTeamName">Team Y</li>
+    </ul>
+    <main class="container">
+      <table id="pitch"></table>
+    </main>
+    <ul class="endTurn">
+      <button class="endButton">End Turn</button>
+    </ul>
+
+    <div id="bottom">
+      <div id="drawHolder"></div>
+      <div id="handHolder"></div>
+      <div id="discardHolder"></div>
+    </div>
+  </body>
+
+  <script>
+    const pitch = {
+      top: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
+      mid: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
+      bottom: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
+    };
+    const cards = {};
+    var gamePitch;
+    var abilityCount = 0;
+    var playingAbility = false;
+    var playerScore = 0;
+    var cpuScore = 0;
+    // wings = { 1: 1, 1: 6, 3: 1, 3: 6 };
+
+    //TODO: set the passing to react to the players stats
+    class Player {
+      constructor(name, position, rarity, attack, defence, passing) {
+        this.name = name;
+        this.position = position;
+        this.rarity = rarity;
+        this.attack = attack;
+        this.defence = defence;
+        this.passing = passing;
+      }
+    }
+
+    class Card {
+      constructor(name, type, rarity, text, ability, playable) {
+        this.name = name;
+        this.type = type;
+        this.rarity = rarity;
+        this.text = text;
+        this.ability = ability;
+        this.playable = playable;
+      }
+    }
+
+    allPlayers = [
+      (myPlayer = new Player(
+        "Pele De'Ball",
+        "Defender",
+        "Starter",
+        20,
+        60,
+        50
+      )),
+    ];
+    allCards = [
+      (myCard = new Card(
+        "Push Up",
+        "Attack",
+        "Common",
+        "Move 1 player 1 position. Draw 1 card",
+        { Move: 1, Draw: 1 },
+        "true"
+      )),
+      (myCard2 = new Card(
+        "Short pass",
+        "Attack",
+        "Common",
+        "Pass the ball 1-2 spaces",
+        { Pass: 2 },
+        "PlayerHasBall"
+      )),
+      (myCard3 = new Card(
+        "Shoot",
+        "Attack",
+        "Common",
+        "Shoot for goal", //Success depends on distance, angle and player ability
+        { Shoot: 1 },
+        "PlayerHasBall"
+      )),
+    ];
+
+    userData = {
+      players: [
+        { team: "player1", player: myPlayer, position: "mid:0" },
+        { team: "player1", player: myPlayer, position: "top:1" },
+        { team: "player1", player: myPlayer, position: "mid:2" },
+        { team: "player1", player: myPlayer, position: "bottom:1" },
+      ],
+      //need to make clones of the cards or im using the orignal object
+      cards: [
+        $.extend(true, {}, myCard),
+        $.extend(true, {}, myCard),
+        $.extend(true, {}, myCard2),
+        $.extend(true, {}, myCard),
+        $.extend(true, {}, myCard2),
+        $.extend(true, {}, myCard3),
+      ],
+      draw: [],
+      hand: [],
+      discard: [],
+    };
+
+    startMatch();
+
+    /*
+    console.table(myPlayer);
+    console.table(allPlayers)
+    */
+    console.table(gamePitch);
+
+    function startMatch() {
+      oppositionData = getOpposition();
+      addPlayersToPitch(oppositionData.players);
+      gamePitch.mid["2"].push({ team: "ball" }); //Add the Ball as its own team (lazy, i know)
+      displayGamePitch();
+      userData.draw = shuffleArray(userData.cards);
+
+      drawHand();
+    }
+
+    function resetPitch() {
+      oppositionData = getOpposition();
+      addPlayersToPitch(oppositionData.players);
+    }
+
+    function drawHand() {
+      var draw = `
+        <div class="card draw">
+        <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
+        </div>
+        `;
+
+      var drawCount = `<h3> Draw Pile: <span id="drawCount"></span> </h3>`;
+      $("#drawHolder").append(draw);
+      $("#drawHolder").append(drawCount);
+
+      var discard = `
+        <div class="card discard">
+        <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
+        </div>
+        `;
+      var discardCount = `<h3> Discard Pile: <span id="discardCount"></span> </h3>`;
+      $("#discardHolder").append(discard);
+      $("#discardHolder").append(discardCount);
+
+      for (var i = 0; i < 5; i++) {
+        drawCard();
+      }
+    }
+
+    function drawCard() {
+      if (userData.draw.length == 0) {
+        shuffleDiscardToDraw();
+      }
+
+      var card = userData.draw[0];
+      card.cardPosition = $(".hand").length;
+
+      //add card to hand
+      userData.draw.splice(0, 1);
+      userData.hand.push(card);
+
+      var html =
+        `
+        <div class="card hand"  onclick="playCard(this)">
+        <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
+        <div>
+          <h4><b> ` +
+        card.name +
+        `</b></h4>
+          <p>` +
+        card.text +
+        `</p>
+        </div>
+        </div>
+        `;
+
+      $(html).appendTo("#handHolder").hide().fadeIn("slow");
+      $(".hand").last().data("card", card);
+      $("#drawCount").text(userData.draw.length);
+    }
+
+    $(".draw").on("click", function () {
+      //dont show draw pile in order
+      console.table(shuffleArray(userData.draw));
+    });
+
+    $(".discard").on("click", function () {
+      console.table(userData.discard);
+    });
+
+    $(".endButton").on("click", function () {
+      endTurn();
+    });
+
+    function activateAbility(ability, val) {
+      playingAbility = true;
+      abilityCount++;
+      var ballPos = getBallPosition();
+      var playerPos = getPlayerPositions();
+
+      switch (ability) {
+        case "Pass":
+          // prettier-ignore
+          ballCell =  $('#pitch tr:eq('+ pitchToCell(ballPos.row) +') td:eq('+ (ballPos.col)+')')
+
+          //wait for input to move ball
+          ballCell.css("color", "red");
+
+          ballCell.on("click", function () {
+            ballElem = $(this);
+            //get position
+            var cellIndex = ballElem.closest("td")[0].cellIndex;
+            var rowIndex = ballElem.closest("tr")[0].rowIndex;
+            var directions = [];
+
+            //get avaliable directions to move to
+            for (var i = 1; i < val + 1; i++) {
+              // prettier-ignore
+              directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'))
+              // prettier-ignore
+              if((rowIndex+i) > 2 ){
+                directions.push( down = $('#pitch tr:eq('+(rowIndex+i)+') td:eq('+(cellIndex)+')'))
+              }
+
+              // prettier-ignore
+              if(cellIndex != 0 ){
+                directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-i)+')'))
+              }
+              // prettier-ignore
+              if(rowIndex != 0 ){
+                directions.push( up = $('#pitch tr:eq('+(rowIndex-i)+') td:eq('+(cellIndex)+')'))
+              }
+            }
+
+            directions.forEach((dir) => {
+              //add effets
+              dir.css("background", "yellow");
+              dir.hover(
+                function () {
+                  $(this).css("box-shadow", "0px 0px 14px 0px cyan");
+                },
+                function () {
+                  $(this).css("box-shadow", "");
+                }
+              );
+
+              //move to position
+              if (!ballElem.data().clickSet) {
+                dir.on("click", function () {
+                  //remove ball from current index
+                  row = cellToPitch(rowIndex);
+                  // prettier-ignore
+                  gamePitch[row][cellIndex] = gamePitch[row][cellIndex].filter((player) => player.team != "ball");
+
+                  //add ball to destination index
+                  var dirCellIndex = dir.closest("td")[0].cellIndex;
+                  var dirRowIndex = dir.closest("tr")[0].rowIndex;
+                  dirRow = cellToPitch(dirRowIndex);
+                  gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
+
+                  activateAbility(
+                    Object.keys(card.ability)[abilityCount],
+                    Object.values(card.ability)[abilityCount]
+                  );
+                });
+              }
+            });
+            //click set stops function from running unnecessary times
+            ballElem.data("clickSet", true);
+          });
+          break;
+        case "Move":
+          //apply movement function to all user players
+          playerPos.forEach((player) => {
+            // prettier-ignore
+            cell = $("#pitch tr:eq(" +pitchToCell(player.row) +") td:eq(" +player.col +")");
+            cell.css("color", "red");
+            cell.on("click", function (e) {
+              moveClick(e);
+            });
+          });
+
+          function moveClick(e) {
+            $("td").css("background", "white");
+            playerElem = $(e.target);
+
+            //get position
+            var cellIndex = playerElem[0].cellIndex;
+            var rowIndex = playerElem[0].parentNode.rowIndex;
+
+            //get avaliable directions to move to
+            // prettier-ignore
+            var directions = [
+                forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+1)+')'),
+                down = $('#pitch tr:eq('+(rowIndex+1)+') td:eq('+(cellIndex)+')'),
+            ]
+
+            // prettier-ignore
+            if(cellIndex != 0 ){
+              directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-1)+')'))
+            }
+            // prettier-ignore
+            if(rowIndex != 0 ){
+              directions.push( up = $('#pitch tr:eq('+(rowIndex-1)+') td:eq('+(cellIndex)+')'))
+            }
+
+            directions.forEach((dir) => {
+              if (!dir.text().includes("X")) {
+                //add effets
+                dir.css("background", "yellow");
+                dir.hover(
+                  function () {
+                    $(this).css("box-shadow", "0px 0px 14px 0px cyan");
+                  },
+                  function () {
+                    $(this).css("box-shadow", "");
+                  }
+                );
+
+                //move to position
+                if (!playerElem.data().clickSet) {
+                  dir.on("click", function () {
+                    row = cellToPitch(rowIndex);
+
+                    //get player
+                    // prettier-ignore
+                    var player = gamePitch[row][cellIndex].find((player) =>{return player.team == "player1"});
+                    //remove player from current index
+                    // prettier-ignore
+                    gamePitch[row][cellIndex] = gamePitch[row][cellIndex].filter((player) => player.team != "player1");
+
+                    //add playerto destination index
+                    var dirCellIndex = dir.closest("td")[0].cellIndex;
+                    var dirRowIndex = dir.closest("tr")[0].rowIndex;
+                    dirRow = cellToPitch(dirRowIndex);
+                    gamePitch[dirRow][dirCellIndex].push(player);
+
+                    //check if player has to bring the ball
+                    // prettier-ignore
+                    var hasBall = gamePitch[row][cellIndex].find((player) =>{return player.team == "ball"});
+                    if (hasBall) {
+                      // prettier-ignore
+                      gamePitch[row][cellIndex] = gamePitch[row][cellIndex].filter((player) => player.team != "ball");
+                      gamePitch[dirRow][dirCellIndex].push(hasBall);
+                    }
+
+                    activateAbility(
+                      Object.keys(card.ability)[abilityCount],
+                      Object.values(card.ability)[abilityCount]
+                    );
+                  });
+                }
+              }
+            });
+            //click set stops function from running unnecessary times
+            playerElem.data("clickSet", true);
+          }
+          break;
+        case "Draw":
+          //draw val amount of cards cards
+          for (var i = 0; i < val; i++) {
+            drawCard();
+          }
+          activateAbility(
+            Object.keys(card.ability)[abilityCount],
+            Object.values(card.ability)[abilityCount]
+          );
+          break;
+        case "Shoot":
+          var goalSuccess = 100;
+
+          // prettier-ignore
+          markingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "cpu"});
+          //player is marked
+          if (markingPlayer) {
+            //take defenders defend stat and remove success chance by that much.
+            goalSuccess = goalSuccess - markingPlayer.player.defence;
+          }
+
+          // prettier-ignore
+          attackingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "player1"});
+          //take attackers attack stat and add success chance by that much.
+          goalSuccess = goalSuccess + attackingPlayer.player.attack;
+
+          //player is not centered
+          if (ballPos.row != "mid") {
+            goalSuccess = goalSuccess - 20;
+          }
+
+          //player distance
+          switch (ballPos.col) {
+            case "0":
+              goalSuccess = goalSuccess - 99;
+              break;
+            case "1":
+              goalSuccess = goalSuccess - 90;
+              break;
+            case "2":
+              goalSuccess = goalSuccess - 80;
+              break;
+            case "3":
+              goalSuccess = goalSuccess - 70;
+              break;
+            case "4":
+              goalSuccess = goalSuccess - 60;
+              break;
+            case "5":
+              goalSuccess = goalSuccess - 50;
+              break;
+            default:
+              break;
+          }
+
+          var rand = Math.floor(Math.random() * 100);
+          console.log("chance of scoring | ", "value needed to score");
+          console.log(goalSuccess, rand);
+
+          if (goalSuccess >= rand) {
+            alert("GOAL");
+            playerScore++;
+
+            $("#playerScore").html(playerScore);
+            endTurn();
+
+            //players move back to formation & give opponent
+            resetPitch();
+            gamePitch.mid["3"].push({ team: "ball" });
+          } else {
+            if (goalSuccess > 50) {
+              //if success chance was better than 50
+              //decide where the ball goes
+              missState = Math.floor(Math.random() * 2);
+
+              switch (missState) {
+                case 0:
+                  //ball is pushed to random square within a rang of 2 from goal
+                  alert("Punched away \nThe ball is lose!");
+                  var punchRange = [getRndInteger(0, 3), getRndInteger(4, 6)];
+                  console.log(punchRange);
+                  punchRow = cellToPitch(punchRange[0]);
+                  punchCol = punchRange[1];
+
+                  //remove ball from current index
+                  // prettier-ignore
+                  gamePitch[ballPos.row][ballPos.col] = gamePitch[ballPos.row][ballPos.col].filter((player) => player.team != "ball");
+                  console.log(punchRow, punchCol);
+
+                  console.log(gamePitch[punchRow][punchCol]);
+                  //add ball to destination index
+                  gamePitch[punchRow][punchCol].push({
+                    team: "ball",
+                  });
+                  break;
+                case 1:
+                  //players stay in same possition (loss of possesion / end turn)
+                  alert("Saved \nThe opposition have possession.");
+
+                  //give ball to goalkeeper
+                  // prettier-ignore
+                  gamePitch[ballPos.row][ballPos.col] = gamePitch[ballPos.row][ballPos.col].filter((player) => player.team != "ball");
+                  gamePitch.mid["5"].push({ team: "ball" });
+
+                  endTurn();
+                  break;
+                default:
+                  break;
+              }
+            } else {
+              //goalkick
+              //players move back to formation
+              alert("Missed \nGoalkick");
+              resetPitch();
+              gamePitch.mid["5"].push({ team: "ball" });
+              endTurn();
+            }
+          }
+
+          activateAbility(
+            Object.keys(card.ability)[abilityCount],
+            Object.values(card.ability)[abilityCount]
+          );
+          break;
+        default:
+          //finished running card abilities
+          //console.log("no ability: ", ability);
+          playingAbility = false;
+          break;
+      }
+    }
+
+    function playCard(elem) {
+      if (!playingAbility) {
+        card = $(elem).data("card");
+        var canPlayCard = checkCardIsPlayable(card.playable);
+
+        if (canPlayCard.status) {
+          //animate card removal
+          $(elem).fadeOut("slow", function () {
+            //trigger card's abilities
+            abilityCount = 0;
+            activateAbility(
+              Object.keys(card.ability)[0],
+              Object.values(card.ability)[0]
+            );
+
+            //move to discard pile
+            userData.hand.splice(card.cardPosition, 1);
+            userData.discard.push(card);
+
+            $("#discardCount").text(userData.discard.length);
+
+            var refreshIntervalId = setInterval(function () {
+              if (abilityCount <= Object.keys(card.ability).length) {
+                //ability is running, check again in 1 second
+              } else {
+                clearInterval(refreshIntervalId);
+                //update pitch after card abilties
+                displayGamePitch();
+              }
+            }, 1000);
+          });
+        } else {
+          alert("This card is unplayable. \n" + canPlayCard.reason);
+        }
+      }
+    }
+
+    function endTurn() {
+      console.log("end turn");
+      discardHand();
+    }
+
+    function shuffleDiscardToDraw() {
+      //shuffle discard pile back to draw
+      userData.draw = shuffleArray(userData.discard);
+      userData.discard = [];
+      $("#drawCount").text(userData.draw.length);
+      $("#discardCount").text(userData.discard.length);
+    }
+
+    function discardHand() {
+      $(".hand").fadeOut("slow", function () {
+        userData.hand.forEach((card) => {
+          userData.discard.push(card);
+        });
+        userData.hand = [];
+        $("#discardCount").text(userData.discard.length);
+      });
+    }
+
+    //TODO: generate new opposition for each match
+    function getOpposition() {
+      return {
+        players: [
+          { team: "cpu", player: myPlayer, position: "mid:3" },
+          { team: "cpu", player: myPlayer, position: "mid:4" },
+          { team: "cpu", player: myPlayer, position: "top:4" },
+          { team: "cpu", player: myPlayer, position: "bottom:4" },
+        ],
+        cards: {},
+      };
+    }
+
+    function addPlayersToPitch(oppositionFormation) {
+      gamePitch = $.extend(true, {}, pitch);
+
+      //add user formation
+      userData.players.forEach((player) => {
+        pos = player.position.split(":");
+        gamePitch[pos[0]][pos[1]].push(player);
+      });
+
+      //add opposition formation
+      oppositionFormation.forEach((player) => {
+        pos = player.position.split(":");
+        gamePitch[pos[0]][pos[1]].push(player);
+      });
+    }
+
+    function displayGamePitch() {
+      $("#pitch").html("");
+
+      $.each(gamePitch, function (index) {
+        var html = "<tr>";
+        $.each(gamePitch[index], function (key, cell) {
+          html += '<td class="pitchCell">';
+
+          cell.forEach((player) => {
+            html += getPlayerIcon(player);
+          });
+
+          html += "</td>";
+        });
+        html += "</tr>";
+        $("#pitch").append(html);
+      });
+
+      //display cell info on shift click
+      $(".pitchCell").click(function (e) {
+        if (e.shiftKey) {
+          cell = $(this);
+          //get position
+          var cellIndex = cell.closest("td")[0].cellIndex;
+          var rowIndex = cell.closest("tr")[0].rowIndex;
+          row = cellToPitch(rowIndex);
+
+          console.log(gamePitch[row][cellIndex]);
+        }
+      });
+    }
+
+    function getPlayerIcon(player) {
+      switch (player.team) {
+        case "player1":
+          return "X";
+          break;
+        case "cpu":
+          return "Y";
+          break;
+        case "ball":
+          return "B";
+          break;
+        default:
+          return "";
+          break;
+      }
+    }
+
+    /* Game functions */
+    function getBallPosition() {
+      var ballPos;
+
+      $.each(gamePitch, function (topKey, topValue) {
+        $.each(topValue, function (key, value) {
+          if (value.some((player) => player.team === "ball")) {
+            ballPos = { row: topKey, col: parseInt(key) };
+          }
+        });
+      });
+
+      return ballPos;
+    }
+
+    function getPlayerPositions() {
+      var playerPos = [];
+
+      $.each(gamePitch, function (topKey, topValue) {
+        $.each(topValue, function (key, value) {
+          if (value.some((player) => player.team === "player1")) {
+            playerPos.push({ row: topKey, col: parseInt(key) });
+          }
+        });
+      });
+
+      return playerPos;
+    }
+
+    function cellToPitch(index) {
+      switch (index) {
+        case 0:
+          return "top";
+          break;
+        case 1:
+          return "mid";
+          break;
+        case 2:
+          return "bottom";
+          break;
+        default:
+          break;
+      }
+    }
+
+    function pitchToCell(index) {
+      switch (index) {
+        case "top":
+          return 0;
+          break;
+        case "mid":
+          return 1;
+          break;
+        case "bottom":
+          return 2;
+          break;
+        default:
+          break;
+      }
+    }
+
+    /* Playablity functions */
+    function checkCardIsPlayable(check) {
+      var ballPos = getBallPosition();
+
+      switch (check) {
+        case "PlayerHasBall":
+          // prettier-ignore
+          if (gamePitch[ballPos.row][ballPos.col].some(player => player.team === 'player1')) {
+            return { status: true };
+          } else {
+              return {
+                status: false,
+                reason: "You do not have possession of the ball",
+              };
+          }
+          break;
+        case "PlayerNotHaveBall":
+          // prettier-ignore
+          if (gamePitch[ballPos.row][ballPos.col].some(player => player.team != 'player1')) {
+            return { status: true };
+          } else {
+              return {
+                status: false,
+                reason: "You cannot play this card while you have possession of the ball",
+              };
+          }
+          break;
+        case "true":
+          return { status: true };
+        default:
+          return { status: true };
+      }
+    }
+
+    /* UTILS */
+    function shuffleArray(array) {
+      var currentIndex = array.length,
+        temporaryValue,
+        randomIndex;
+
+      // While there remain elements to shuffle...
+      while (0 !== currentIndex) {
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+      }
+
+      return array;
+    }
+
+    function getRndInteger(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+  </script>
+</html>
