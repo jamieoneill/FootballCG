@@ -42,7 +42,7 @@
         min-width: 10px;
         text-align: center;
       }
-      #bottom {
+      #allCardHolder {
         display: flex;
         justify-content: space-between;
         position: relative;
@@ -118,10 +118,11 @@
       <table id="pitch"></table>
     </main>
     <ul class="endTurn">
+      <textarea name="commentary" id="commentary" cols="30"></textarea>
       <button class="endButton">End Turn</button>
     </ul>
 
-    <div id="bottom">
+    <div id="allCardHolder">
       <div id="drawHolder"></div>
       <div id="handHolder"></div>
       <div id="discardHolder"></div>
@@ -333,26 +334,26 @@
           ballCell.on("click", function () {
             ballElem = $(this);
             //get position
-            var cellIndex = ballElem.closest("td")[0].cellIndex;
-            var rowIndex = ballElem.closest("tr")[0].rowIndex;
+            var cellIndex = ballElem[0].cellIndex;
+            var rowIndex = ballElem[0].parentNode.rowIndex;
             var directions = [];
 
-            //get avaliable directions to move to
             for (var i = 1; i < val + 1; i++) {
               // prettier-ignore
-              directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'))
+              directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'));
+
               // prettier-ignore
-              if((rowIndex+i) > 2 ){
-                directions.push( down = $('#pitch tr:eq('+(rowIndex+i)+') td:eq('+(cellIndex)+')'))
+              if((rowIndex+i) <= 2 ){
+                directions.push( down = $('#pitch tr:eq('+(rowIndex+i)+') td:eq('+(cellIndex)+')'));
               }
 
               // prettier-ignore
-              if(cellIndex != 0 ){
-                directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-i)+')'))
+              if((cellIndex-i)  >= 0){
+                directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-i)+')'));
               }
               // prettier-ignore
-              if(rowIndex != 0 ){
-                directions.push( up = $('#pitch tr:eq('+(rowIndex-i)+') td:eq('+(cellIndex)+')'))
+              if((rowIndex-i) >= 0 ){
+                directions.push( up = $('#pitch tr:eq('+(rowIndex-i)+') td:eq('+(cellIndex)+')'));
               }
             }
 
@@ -376,11 +377,54 @@
                   // prettier-ignore
                   gamePitch[row][cellIndex] = gamePitch[row][cellIndex].filter((player) => player.team != "ball");
 
-                  //add ball to destination index
-                  var dirCellIndex = dir.closest("td")[0].cellIndex;
-                  var dirRowIndex = dir.closest("tr")[0].rowIndex;
+                  //get player passing stats
+                  // prettier-ignore
+                  var player = gamePitch[row][cellIndex].find((player) => player.team == "player1");
+                  var randPassChance = Math.floor(Math.random() * 100);
+
+                  //move the ball
+                  var dirCellIndex = dir[0].cellIndex;
+                  var dirRowIndex = dir[0].parentNode.rowIndex;
                   dirRow = cellToPitch(dirRowIndex);
-                  gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
+
+                  console.log("chance of passing | ", "value needed to pass");
+                  console.log(player.player.passing, randPassChance);
+
+                  if (player.player.passing >= randPassChance) {
+                    commentate("Good pass");
+                    //add ball to destination index
+                    gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
+                  } else {
+                    commentate("Poor pass...");
+                    //add ball to nearby index from destination
+                    forwardOrBack = Math.floor(Math.random() * 2);
+
+                    //send the ball one space forward or backward if theres a cell there.. make sure it's not the same as the source
+                    // prettier-ignore
+                    if (forwardOrBack == 0 && (dirCellIndex - 1)  <= 0 && (dirCellIndex - 1) !=cellIndex ){
+                      commentate("The ball has gone behind it's target");
+                      gamePitch[dirRow][dirCellIndex - 1].push({
+                        team: "ball",
+                      });
+                    } else if (forwardOrBack == 0) {
+                      commentate("The ball has gone ahead of it's target");
+                      gamePitch[dirRow][dirCellIndex + 1].push({
+                        team: "ball",
+                      });
+                    }
+                    // prettier-ignore
+                    if (forwardOrBack == 1 && (dirCellIndex + 1) <= 5 && (dirCellIndex + 1) !=cellIndex ) {
+                      commentate("The ball has gone ahead of it's target");
+                      gamePitch[dirRow][dirCellIndex + 1].push({
+                        team: "ball",
+                      });
+                    } else if (forwardOrBack == 1) {
+                      commentate("The ball has gone behind it's target");
+                      gamePitch[dirRow][dirCellIndex - 1].push({
+                        team: "ball",
+                      });
+                    }
+                  }
 
                   activateAbility(
                     Object.keys(card.ability)[abilityCount],
@@ -513,34 +557,34 @@
 
           //player distance
           switch (ballPos.col) {
-            case "0":
+            case 0:
               goalSuccess = goalSuccess - 99;
               break;
-            case "1":
+            case 1:
               goalSuccess = goalSuccess - 90;
               break;
-            case "2":
+            case 2:
               goalSuccess = goalSuccess - 80;
               break;
-            case "3":
+            case 3:
               goalSuccess = goalSuccess - 70;
               break;
-            case "4":
+            case 4:
               goalSuccess = goalSuccess - 60;
               break;
-            case "5":
+            case 5:
               goalSuccess = goalSuccess - 50;
               break;
             default:
               break;
           }
 
-          var rand = Math.floor(Math.random() * 100);
+          var randGoalChance = Math.floor(Math.random() * 100);
           console.log("chance of scoring | ", "value needed to score");
-          console.log(goalSuccess, rand);
+          console.log(goalSuccess, randGoalChance);
 
-          if (goalSuccess >= rand) {
-            alert("GOAL");
+          if (goalSuccess >= randGoalChance) {
+            commentate("Shoots... GOAL");
             playerScore++;
 
             $("#playerScore").html(playerScore);
@@ -558,7 +602,7 @@
               switch (missState) {
                 case 0:
                   //ball is pushed to random square within a rang of 2 from goal
-                  alert("Punched away \nThe ball is lose!");
+                  commentate("Punched away \nThe ball is lose!");
                   var punchRange = [getRndInteger(0, 3), getRndInteger(4, 6)];
                   console.log(punchRange);
                   punchRow = cellToPitch(punchRange[0]);
@@ -577,7 +621,9 @@
                   break;
                 case 1:
                   //players stay in same possition (loss of possesion / end turn)
-                  alert("Saved \nThe opposition have possession.");
+                  commentate(
+                    "Shoots... Saved \nThe opposition have possession."
+                  );
 
                   //give ball to goalkeeper
                   // prettier-ignore
@@ -592,7 +638,7 @@
             } else {
               //goalkick
               //players move back to formation
-              alert("Missed \nGoalkick");
+              commentate("Shoots... Missed \nGoalkick");
               resetPitch();
               gamePitch.mid["5"].push({ team: "ball" });
               endTurn();
@@ -809,6 +855,10 @@
         default:
           break;
       }
+    }
+
+    function commentate(message) {
+      $("#commentary").append(message + "\n");
     }
 
     /* Playablity functions */
