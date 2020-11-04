@@ -11,6 +11,11 @@
       integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdn.jsdelivr.net/gh/StephanWagner/jBox@v1.2.0/dist/jBox.all.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/gh/StephanWagner/jBox@v1.2.0/dist/jBox.all.min.css"
+      rel="stylesheet"
+    />
 
     <style>
       body {
@@ -74,13 +79,34 @@
       img {
         -webkit-user-drag: none;
       }
-      .endTurn {
+      .buttonHolder {
         display: flex;
+        flex-flow: row wrap;
         justify-content: flex-end;
-        margin: 0;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .buttonHolder > * {
+        padding: 10px;
+        flex: 1 100%;
+      }
+      .alilityButton {
+        order: 1;
+        flex: 1 0 0;
+        padding: 5px;
+        margin: 20px;
+        width: 150px;
+        text-align: center;
+        background: deepskyblue;
+      }
+      .commentaryBox {
+        order: 2;
+        flex: 3 0px;
       }
       .endButton {
         padding: 5px;
+        order: 3;
+        flex: 1 0 0;
         margin: 20px;
         width: 150px;
         text-align: center;
@@ -94,13 +120,11 @@
         margin: 0;
         background: deepskyblue;
       }
-
       .scoreHolder li {
         text-decoration: none;
         display: block;
         padding: 1em;
       }
-
       .scoreHolder li:hover {
         background: #1565c0;
       }
@@ -117,11 +141,15 @@
     <main class="container">
       <table id="pitch"></table>
     </main>
-    <ul class="endTurn">
-      <textarea name="commentary" id="commentary" cols="30"></textarea>
+    <div class="buttonHolder">
+      <button class="alilityButton">Activate Alility</button>
+      <textarea
+        class="commentaryBox"
+        name="commentary"
+        id="commentary"
+      ></textarea>
       <button class="endButton">End Turn</button>
-    </ul>
-
+    </div>
     <div id="allCardHolder">
       <div id="drawHolder"></div>
       <div id="handHolder"></div>
@@ -136,22 +164,24 @@
       bottom: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
     };
     const cards = {};
+    const keyWords = ["GoalChance"];
     var gamePitch;
-    var abilityCount = 0;
-    var playingAbility = false;
-    var playerScore = 0;
-    var cpuScore = 0;
+    var abilityCount;
+    var playingAbility;
+    var playerScore;
+    var cpuScore;
     // wings = { 1: 1, 1: 6, 3: 1, 3: 6 };
+    var turnCounter;
 
-    //TODO: set the passing to react to the players stats
     class Player {
-      constructor(name, position, rarity, attack, defence, passing) {
+      constructor(name, position, rarity, attack, defence, passing, ability) {
         this.name = name;
         this.position = position;
         this.rarity = rarity;
         this.attack = attack;
         this.defence = defence;
         this.passing = passing;
+        this.ability = ability;
       }
     }
 
@@ -166,14 +196,41 @@
       }
     }
 
+    class PlayerAbility {
+      constructor(name, description, ability, appliesTo) {
+        this.name = name;
+        this.description = description;
+        this.ability = ability;
+        this.appliesTo = appliesTo;
+      }
+    }
+
+    allPlayerAbilities = [
+      (engineAbility = new PlayerAbility(
+        "Engine",
+        "Move this player up to 3 spaces in any direction",
+        { Move: 3 },
+        "self"
+      )),
+    ];
     allPlayers = [
       (myPlayer = new Player(
         "Pele De'Ball",
         "Defender",
         "Starter",
         20,
-        60,
-        50
+        40,
+        20,
+        engineAbility
+      )),
+      (myPlayer2 = new Player(
+        "Stop De'Ball",
+        "Goalkeeper",
+        "Starter",
+        0,
+        30,
+        0,
+        null
       )),
     ];
     allCards = [
@@ -181,7 +238,7 @@
         "Push Up",
         "Attack",
         "Common",
-        "Move 1 player 1 position. Draw 1 card",
+        "Move 1 player 1 position, Draw 1 card",
         { Move: 1, Draw: 1 },
         "true"
       )),
@@ -197,14 +254,16 @@
         "Shoot",
         "Attack",
         "Common",
-        "Shoot for goal", //Success depends on distance, angle and player ability
+        "Shoot for goal, GoalChance for success",
         { Shoot: 1 },
         "PlayerHasBall"
       )),
+      (TempCard = new Card("TempCard", "None", "None", "None", {}, "true")),
     ];
 
     userData = {
       players: [
+        { team: "player1", player: myPlayer2, position: "" },
         { team: "player1", player: myPlayer, position: "mid:0" },
         { team: "player1", player: myPlayer, position: "top:1" },
         { team: "player1", player: myPlayer, position: "mid:2" },
@@ -232,7 +291,13 @@
     */
     console.table(gamePitch);
 
-    function startMatch() {
+    function startMatch(options) {
+      abilityCount = 0;
+      playingAbility = false;
+      playerScore = 0;
+      cpuScore = 0;
+      turnCounter = 1;
+
       oppositionData = getOpposition();
       addPlayersToPitch(oppositionData.players);
       gamePitch.mid["2"].push({ team: "ball" }); //Add the Ball as its own team (lazy, i know)
@@ -270,6 +335,7 @@
       for (var i = 0; i < 5; i++) {
         drawCard();
       }
+      UpdateCardsKeyWords();
     }
 
     function drawCard() {
@@ -292,7 +358,7 @@
           <h4><b> ` +
         card.name +
         `</b></h4>
-          <p>` +
+          <p class="cardText">` +
         card.text +
         `</p>
         </div>
@@ -317,11 +383,62 @@
       endTurn();
     });
 
-    function activateAbility(ability, val) {
+    $(".alilityButton").on("click", function () {
+      var playerPos = getPlayerPositions();
+
+      playerPos.forEach((position) => {
+        //get players with abilities
+        // prettier-ignore
+        player = gamePitch[position.row][position.col].find((player) => player.team == "player1" && player.player.ability );
+
+        // prettier-ignore
+        cell = $("#pitch tr:eq(" +pitchToCell(position.row) +") td:eq(" +position.col +")");
+        cell.css("color", "red");
+        cell.data("playerData", player);
+        //show ability on hover
+        cell.jBox("Tooltip", {
+          content: player.player.ability,
+        });
+
+        //run player ability
+        cell.on("click", function () {
+          $(".pitchCell").css("color", "black");
+          var name = Object.keys(
+            $(this).data("playerData").player.ability.ability
+          )[0];
+          var value = Object.values(
+            $(this).data("playerData").player.ability.ability
+          )[0];
+          var appliesTo = $(this).data("playerData").player.ability.appliesTo;
+
+          //create a temp card that holds the player's ability
+          var tempCard = $.extend(true, {}, TempCard);
+          tempCard.ability[name] = value;
+
+          //set ability to correct cells
+          if (appliesTo == "self") {
+            cell = $(this);
+            var cellIndex = cell.closest("td")[0].cellIndex;
+            var rowIndex = cell.closest("tr")[0].rowIndex;
+            tempCard.appliesTo = [rowIndex, cellIndex];
+          }
+
+          playCard(null, tempCard);
+        });
+      });
+    });
+
+    function activateAbility(card) {
+      ability = Object.keys(card.ability)[abilityCount];
+      val = Object.values(card.ability)[abilityCount];
       playingAbility = true;
       abilityCount++;
       var ballPos = getBallPosition();
       var playerPos = getPlayerPositions();
+
+      try {
+        UpdateCardsKeyWords();
+      } catch {}
 
       switch (ability) {
         case "Pass":
@@ -387,8 +504,8 @@
                   var dirRowIndex = dir[0].parentNode.rowIndex;
                   dirRow = cellToPitch(dirRowIndex);
 
-                  console.log("chance of passing | ", "value needed to pass");
-                  console.log(player.player.passing, randPassChance);
+                  //console.log("chance of passing | ", "value needed to pass");
+                  //console.log(player.player.passing, randPassChance);
 
                   if (player.player.passing >= randPassChance) {
                     commentate("Good pass");
@@ -396,8 +513,19 @@
                     gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
                   } else {
                     commentate("Poor pass...");
+                    missedPassOptions = 2;
+
+                    // prettier-ignore
+                    markingPlayer = gamePitch[dirRow][dirCellIndex].find((player) =>{return player.team == "cpu"});
+                    //player is marked
+                    if (markingPlayer) {
+                      missedPassOptions = 3;
+                    }
+
                     //add ball to nearby index from destination
-                    forwardOrBack = Math.floor(Math.random() * 2);
+                    forwardOrBack = Math.floor(
+                      Math.random() * missedPassOptions
+                    );
 
                     //send the ball one space forward or backward if theres a cell there.. make sure it's not the same as the source
                     // prettier-ignore
@@ -424,12 +552,19 @@
                         team: "ball",
                       });
                     }
+
+                    //player was marked and lost possession
+                    if (forwardOrBack == 2) {
+                      commentate(
+                        "The ball has been intercepted by the opposition"
+                      );
+                      commentate("The opposition have possesion");
+                      gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
+                      endTurn();
+                    }
                   }
 
-                  activateAbility(
-                    Object.keys(card.ability)[abilityCount],
-                    Object.values(card.ability)[abilityCount]
-                  );
+                  activateAbility(card);
                 });
               }
             });
@@ -438,38 +573,51 @@
           });
           break;
         case "Move":
-          //apply movement function to all user players
-          playerPos.forEach((player) => {
+          if (card.appliesTo) {
+            //only apply movement to target
             // prettier-ignore
-            cell = $("#pitch tr:eq(" +pitchToCell(player.row) +") td:eq(" +player.col +")");
+            cell = $("#pitch tr:eq(" +card.appliesTo[0] +") td:eq(" +card.appliesTo[1] +")");
             cell.css("color", "red");
-            cell.on("click", function (e) {
-              moveClick(e);
+            moveClick(cell);
+          } else {
+            //apply movement function to all user players
+            playerPos.forEach((player) => {
+              // prettier-ignore
+              cell = $("#pitch tr:eq(" +pitchToCell(player.row) +") td:eq(" +player.col +")");
+              cell.css("color", "red");
+              cell.on("click", function (e) {
+                moveClick(e.target);
+              });
             });
-          });
+          }
 
           function moveClick(e) {
             $("td").css("background", "white");
-            playerElem = $(e.target);
+            playerElem = $(e);
 
             //get position
             var cellIndex = playerElem[0].cellIndex;
             var rowIndex = playerElem[0].parentNode.rowIndex;
 
-            //get avaliable directions to move to
-            // prettier-ignore
-            var directions = [
-                forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+1)+')'),
-                down = $('#pitch tr:eq('+(rowIndex+1)+') td:eq('+(cellIndex)+')'),
-            ]
+            var directions = [];
 
-            // prettier-ignore
-            if(cellIndex != 0 ){
-              directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-1)+')'))
-            }
-            // prettier-ignore
-            if(rowIndex != 0 ){
-              directions.push( up = $('#pitch tr:eq('+(rowIndex-1)+') td:eq('+(cellIndex)+')'))
+            for (var i = 1; i < val + 1; i++) {
+              // prettier-ignore
+              directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'));
+
+              // prettier-ignore
+              if((rowIndex+i) <= 2 ){
+                directions.push( down = $('#pitch tr:eq('+(rowIndex+i)+') td:eq('+(cellIndex)+')'));
+              }
+
+              // prettier-ignore
+              if((cellIndex-i)  >= 0){
+                directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-i)+')'));
+              }
+              // prettier-ignore
+              if((rowIndex-i) >= 0 ){
+                directions.push( up = $('#pitch tr:eq('+(rowIndex-i)+') td:eq('+(cellIndex)+')'));
+              }
             }
 
             directions.forEach((dir) => {
@@ -512,10 +660,7 @@
                       gamePitch[dirRow][dirCellIndex].push(hasBall);
                     }
 
-                    activateAbility(
-                      Object.keys(card.ability)[abilityCount],
-                      Object.values(card.ability)[abilityCount]
-                    );
+                    activateAbility(card);
                   });
                 }
               }
@@ -529,65 +674,29 @@
           for (var i = 0; i < val; i++) {
             drawCard();
           }
-          activateAbility(
-            Object.keys(card.ability)[abilityCount],
-            Object.values(card.ability)[abilityCount]
-          );
+          activateAbility(card);
           break;
         case "Shoot":
-          var goalSuccess = 100;
-
-          // prettier-ignore
-          markingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "cpu"});
-          //player is marked
-          if (markingPlayer) {
-            //take defenders defend stat and remove success chance by that much.
-            goalSuccess = goalSuccess - markingPlayer.player.defence;
-          }
-
-          // prettier-ignore
-          attackingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "player1"});
-          //take attackers attack stat and add success chance by that much.
-          goalSuccess = goalSuccess + attackingPlayer.player.attack;
-
-          //player is not centered
-          if (ballPos.row != "mid") {
-            goalSuccess = goalSuccess - 20;
-          }
-
-          //player distance
-          switch (ballPos.col) {
-            case 0:
-              goalSuccess = goalSuccess - 99;
-              break;
-            case 1:
-              goalSuccess = goalSuccess - 90;
-              break;
-            case 2:
-              goalSuccess = goalSuccess - 80;
-              break;
-            case 3:
-              goalSuccess = goalSuccess - 70;
-              break;
-            case 4:
-              goalSuccess = goalSuccess - 60;
-              break;
-            case 5:
-              goalSuccess = goalSuccess - 50;
-              break;
-            default:
-              break;
-          }
-
           var randGoalChance = Math.floor(Math.random() * 100);
-          console.log("chance of scoring | ", "value needed to score");
-          console.log(goalSuccess, randGoalChance);
+          var goalSuccess = getGoalChance();
+          //console.log("chance of scoring | ", "value needed to score");
+          //console.log(goalSuccess, randGoalChance);
 
           if (goalSuccess >= randGoalChance) {
             commentate("Shoots... GOAL");
             playerScore++;
-
             $("#playerScore").html(playerScore);
+
+            player = gamePitch[ballPos.row][ballPos.col].find((player) => player.team == "player1");
+            console.log(player)
+            var goalModal = new jBox("Modal", {
+              title: "GOAL!",
+              content: player.player.name + " scores!" ,
+              animation: "tada",
+              autoClose: "2500"
+            });
+            goalModal.open();
+
             endTurn();
 
             //players move back to formation & give opponent
@@ -611,9 +720,7 @@
                   //remove ball from current index
                   // prettier-ignore
                   gamePitch[ballPos.row][ballPos.col] = gamePitch[ballPos.row][ballPos.col].filter((player) => player.team != "ball");
-                  console.log(punchRow, punchCol);
 
-                  console.log(gamePitch[punchRow][punchCol]);
                   //add ball to destination index
                   gamePitch[punchRow][punchCol].push({
                     team: "ball",
@@ -645,10 +752,7 @@
             }
           }
 
-          activateAbility(
-            Object.keys(card.ability)[abilityCount],
-            Object.values(card.ability)[abilityCount]
-          );
+          activateAbility(card);
           break;
         default:
           //finished running card abilities
@@ -658,46 +762,59 @@
       }
     }
 
-    function playCard(elem) {
+    function playCard(elem, setCard) {
       if (!playingAbility) {
-        card = $(elem).data("card");
+        var card;
+        if (elem) {
+          card = $(elem).data("card");
+        } else {
+          card = setCard;
+        }
+
         var canPlayCard = checkCardIsPlayable(card.playable);
 
         if (canPlayCard.status) {
-          //animate card removal
-          $(elem).fadeOut("slow", function () {
-            //trigger card's abilities
-            abilityCount = 0;
-            activateAbility(
-              Object.keys(card.ability)[0],
-              Object.values(card.ability)[0]
-            );
-
-            //move to discard pile
-            userData.hand.splice(card.cardPosition, 1);
-            userData.discard.push(card);
-
-            $("#discardCount").text(userData.discard.length);
-
-            var refreshIntervalId = setInterval(function () {
-              if (abilityCount <= Object.keys(card.ability).length) {
-                //ability is running, check again in 1 second
-              } else {
-                clearInterval(refreshIntervalId);
-                //update pitch after card abilties
-                displayGamePitch();
-              }
-            }, 1000);
-          });
+          if (elem) {
+            //animate card removal
+            $(elem).fadeOut("slow", function () {
+              waitForCardToPlay();
+            });
+          } else {
+            waitForCardToPlay();
+          }
         } else {
           alert("This card is unplayable. \n" + canPlayCard.reason);
         }
+      }
+
+      function waitForCardToPlay() {
+        //trigger card's abilities
+        abilityCount = 0;
+        activateAbility(card);
+
+        //move to discard pile
+        userData.hand.splice(card.cardPosition, 1);
+        userData.discard.push(card);
+
+        $("#discardCount").text(userData.discard.length);
+
+        var refreshIntervalId = setInterval(function () {
+          if (abilityCount <= Object.keys(card.ability).length) {
+            //ability is running, check again in 1 second
+          } else {
+            clearInterval(refreshIntervalId);
+            //update pitch after card abilties
+            displayGamePitch();
+          }
+        }, 1000);
       }
     }
 
     function endTurn() {
       console.log("end turn");
+      turnCounter++;
       discardHand();
+      $(".endButton").prop("disabled", true);
     }
 
     function shuffleDiscardToDraw() {
@@ -722,6 +839,7 @@
     function getOpposition() {
       return {
         players: [
+          { team: "cpu", player: myPlayer2, position: "" },
           { team: "cpu", player: myPlayer, position: "mid:3" },
           { team: "cpu", player: myPlayer, position: "mid:4" },
           { team: "cpu", player: myPlayer, position: "top:4" },
@@ -736,14 +854,18 @@
 
       //add user formation
       userData.players.forEach((player) => {
-        pos = player.position.split(":");
-        gamePitch[pos[0]][pos[1]].push(player);
+        if (player.player.position != "Goalkeeper") {
+          pos = player.position.split(":");
+          gamePitch[pos[0]][pos[1]].push(player);
+        }
       });
 
       //add opposition formation
       oppositionFormation.forEach((player) => {
-        pos = player.position.split(":");
-        gamePitch[pos[0]][pos[1]].push(player);
+        if (player.player.position != "Goalkeeper") {
+          pos = player.position.split(":");
+          gamePitch[pos[0]][pos[1]].push(player);
+        }
       });
     }
 
@@ -762,6 +884,7 @@
           html += "</td>";
         });
         html += "</tr>";
+        //$("#pitch").last().data("card", card);
         $("#pitch").append(html);
       });
 
@@ -796,6 +919,24 @@
       }
     }
 
+    function UpdateCardsKeyWords() {
+      //check each card in the hand for keyWords and update
+      userData.hand.forEach((card) => {
+        var keyWordFound = keyWords.find((v) => card.text.includes(v));
+        if (keyWordFound) {
+          switch (keyWordFound) {
+            case "GoalChance":
+              $($(".cardText")[card.cardPosition]).text(
+                card.text.replace(keyWordFound, getGoalChance() + "%")
+              );
+              break;
+            default:
+              break;
+          }
+        }
+      });
+    }
+
     /* Game functions */
     function getBallPosition() {
       var ballPos;
@@ -823,6 +964,59 @@
       });
 
       return playerPos;
+    }
+
+    function getGoalChance() {
+      var ballPos = getBallPosition();
+      var goalSuccess = 100;
+
+      // prettier-ignore
+      markingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "cpu"});
+      //player is marked
+      if (markingPlayer) {
+        //take defenders defend stat and remove success chance by that much.
+        goalSuccess = goalSuccess - markingPlayer.player.defence;
+      }
+
+      //get the goalkeeper stats
+      // prettier-ignore
+      goalSuccess = goalSuccess - (oppositionData.players.find((player) =>{return player.player.position == "Goalkeeper"}).player.defence);
+
+      // prettier-ignore
+      attackingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "player1"});
+      //take attackers attack stat and add success chance by that much.
+      goalSuccess = goalSuccess + attackingPlayer.player.attack;
+
+      //player is not centered
+      if (ballPos.row != "mid") {
+        goalSuccess = goalSuccess - 20;
+      }
+
+      //player distance
+      switch (ballPos.col) {
+        case 0:
+          goalSuccess = goalSuccess - 99;
+          break;
+        case 1:
+          goalSuccess = goalSuccess - 90;
+          break;
+        case 2:
+          goalSuccess = goalSuccess - 80;
+          break;
+        case 3:
+          goalSuccess = goalSuccess - 70;
+          break;
+        case 4:
+          goalSuccess = goalSuccess - 60;
+          break;
+        case 5:
+          goalSuccess = goalSuccess - 50;
+          break;
+        default:
+          break;
+      }
+
+      return goalSuccess;
     }
 
     function cellToPitch(index) {
