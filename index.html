@@ -384,6 +384,16 @@
     });
 
     $(".alilityButton").on("click", function () {
+      var alilityButton = $(this);
+
+      //cancel
+      if (alilityButton.html() == "Cancel") {
+        alilityButton.css("background-color", "deepskyblue");
+        alilityButton.html("Activate Alility");
+        displayGamePitch();
+        return;
+      }
+
       var playerPos = getPlayerPositions();
 
       playerPos.forEach((position) => {
@@ -424,8 +434,17 @@
           }
 
           playCard(null, tempCard);
+
+          //ability used
+          alilityButton.html("Alility has be used");
+          alilityButton.css("background-color", "deepskyblue");
+          alilityButton.prop("disabled", true);
         });
       });
+
+      //allow cancel
+      alilityButton.css("background-color", "red");
+      alilityButton.html("Cancel");
     });
 
     function activateAbility(card) {
@@ -512,7 +531,7 @@
                     //add ball to destination index
                     gamePitch[dirRow][dirCellIndex].push({ team: "ball" });
                   } else {
-                    commentate("Poor pass...");
+                    commentate("Poor pass from " + player.player.name);
                     missedPassOptions = 2;
 
                     // prettier-ignore
@@ -687,13 +706,15 @@
             playerScore++;
             $("#playerScore").html(playerScore);
 
-            player = gamePitch[ballPos.row][ballPos.col].find((player) => player.team == "player1");
-            console.log(player)
+            player = gamePitch[ballPos.row][ballPos.col].find(
+              (player) => player.team == "player1"
+            );
+            console.log(player);
             var goalModal = new jBox("Modal", {
               title: "GOAL!",
-              content: player.player.name + " scores!" ,
+              content: player.player.name + " scores!",
               animation: "tada",
-              autoClose: "2500"
+              autoClose: "2500",
             });
             goalModal.open();
 
@@ -1053,6 +1074,7 @@
 
     function commentate(message) {
       $("#commentary").append(message + "\n");
+      $('#commentary').scrollTop($('#commentary')[0].scrollHeight);
     }
 
     /* Playablity functions */
