@@ -118,25 +118,34 @@
         justify-content: center;
         list-style: none;
         margin: 0;
-        background: deepskyblue;
+        background: #000000;
       }
       .scoreHolder li {
         text-decoration: none;
         display: block;
         padding: 1em;
+        border: 1px solid #000000;
+        background: #ffffff;
       }
       .scoreHolder li:hover {
-        background: #1565c0;
+        background: #ffffff;
+      }
+      #playerTeamName {
+        background: #286ffe;
+      }
+      #cpuTeamName {
+        background: #ff0e00;
       }
     </style>
   </head>
 
   <body>
     <ul class="scoreHolder">
-      <li id="playerTeamName">Team X</li>
+      <li id="playerTeamName">Team Blue</li>
       <li id="playerScore">0</li>
+      <li id="time">00:00</li>
       <li id="cpuScore">0</li>
-      <li id="cpuTeamName">Team Y</li>
+      <li id="cpuTeamName">Team Red</li>
     </ul>
     <main class="container">
       <table id="pitch"></table>
@@ -245,8 +254,8 @@
         "Short pass",
         "Attack",
         "Common",
-        "Pass the ball 1-2 spaces",
-        { Pass: 2 },
+        "Pass the ball 1 space",
+        { Pass: 1 },
         ["PlayerHasBall"]
       )),
       (myCard3 = new Card(
@@ -419,7 +428,7 @@
 
         // prettier-ignore
         cell = $("#pitch tr:eq(" +pitchToCell(position.row) +") td:eq(" +position.col +")");
-        cell.css("color", "red");
+        cell.css("background-color", "lightgreen");
         cell.data("playerData", player);
         //show ability on hover
         cell.jBox("Tooltip", {
@@ -481,7 +490,7 @@
           ballCell =  $('#pitch tr:eq('+ pitchToCell(ballPos.row) +') td:eq('+ (ballPos.col)+')')
 
           //wait for input to move ball
-          ballCell.css("color", "red");
+          ballCell.css("background-color", "lightgreen");
 
           ballCell.on("click", function () {
             ballElem = $(this);
@@ -564,7 +573,7 @@
 
                     //send the ball one space forward or backward if theres a cell there.. make sure it's not the same as the source
                     // prettier-ignore
-                    if (forwardOrBack == 0 && (dirCellIndex - 1)  <= 0 && (dirCellIndex - 1) !=cellIndex ){
+                    if (forwardOrBack == 0 && (dirCellIndex - 1)  >= 0 && (dirCellIndex - 1) != cellIndex ){
                       commentate("The ball has gone behind it's target");
                       gamePitch[dirRow][dirCellIndex - 1].push({
                         team: "ball",
@@ -621,7 +630,7 @@
             //only apply movement to target
             // prettier-ignore
             cell = $("#pitch tr:eq(" +card.appliesTo[0] +") td:eq(" +card.appliesTo[1] +")");
-            cell.css("color", "red");
+            cell.css("background-color", "lightgreen");
             moveClick(cell);
           } else if ($.inArray("Marked", card.playable) > -1) {
             //only apply movement to marked players
@@ -630,7 +639,7 @@
               if(gamePitch[position.row][position.col].find((player) => player.team == "cpu")){
                 // prettier-ignore
                 cell = $("#pitch tr:eq(" +pitchToCell(position.row) +") td:eq(" +position.col +")");
-                cell.css("color", "red");
+                cell.css("background-color", "lightgreen");
                 cell.on("click", function (e) {
                   moveClick(e.target);
                 });
@@ -641,7 +650,7 @@
             playerPos.forEach((position) => {
               // prettier-ignore
               cell = $("#pitch tr:eq(" +pitchToCell(position.row) +") td:eq(" +position.col +")");
-              cell.css("color", "red");
+              cell.css("background-color", "lightgreen");
               cell.on("click", function (e) {
                 moveClick(e.target);
               });
@@ -678,7 +687,17 @@
             }
 
             directions.forEach((dir) => {
-              if (!dir.text().includes("X")) {
+              dir.unbind("click");
+
+              var dirCellIndex = dir.closest("td")[0].cellIndex;
+              var dirRowIndex = dir.closest("tr")[0].rowIndex;
+              dirRow = cellToPitch(dirRowIndex);
+
+              //make sure space has no teammate in it
+              // prettier-ignore
+              var player = gamePitch[dirRow][dirCellIndex].find((player) => {return player.team == "player1";});
+
+              if (!player) {
                 //add effets
                 dir.css("background", "yellow");
                 dir.hover(
@@ -747,7 +766,6 @@
             player = gamePitch[ballPos.row][ballPos.col].find(
               (player) => player.team == "player1"
             );
-            console.log(player);
             var goalModal = new jBox("Modal", {
               title: "GOAL!",
               content: player.player.name + " scores!",
@@ -942,6 +960,7 @@
       $.each(gamePitch, function (index) {
         var html = "<tr>";
         $.each(gamePitch[index], function (key, cell) {
+          sortPlayerIcons(cell);
           html += '<td class="pitchCell">';
 
           cell.forEach((player) => {
@@ -972,18 +991,31 @@
     function getPlayerIcon(player) {
       switch (player.team) {
         case "player1":
-          return "X";
+          return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/blue.png">';
           break;
         case "cpu":
-          return "Y";
+          return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/red.png">';
           break;
         case "ball":
-          return "B";
+          return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/ball.png">';
           break;
         default:
           return "";
           break;
       }
+    }
+
+    function sortPlayerIcons(cell) {
+      //display icons in this order in the cell
+      var ordering = {};
+      var sortOrder = ["player1", "ball", "cpu"];
+      for (var i = 0; i < sortOrder.length; i++) ordering[sortOrder[i]] = i;
+
+      cell.sort(function (a, b) {
+        return ordering[a.team] - ordering[b.team];
+      });
+
+      return cell;
     }
 
     function UpdateCardsKeyWords() {
