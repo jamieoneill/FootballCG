@@ -44,7 +44,8 @@
       }
       #pitch td {
         border: 1px solid #aaaaaa;
-        min-width: 10px;
+        min-width: 0px;
+        max-width: 0px;
         text-align: center;
       }
       #allCardHolder {
@@ -143,7 +144,7 @@
     <ul class="scoreHolder">
       <li id="playerTeamName">Team Blue</li>
       <li id="playerScore">0</li>
-      <li id="time">00:00</li>
+      <li><label id="matchTime">00</label><label>:00</label></li>
       <li id="cpuScore">0</li>
       <li id="cpuTeamName">Team Red</li>
     </ul>
@@ -180,6 +181,8 @@
     var playerScore;
     var cpuScore;
     var turnCounter;
+    var matchTime;
+    var statChanges;
 
     class Player {
       constructor(name, position, rarity, attack, defence, passing, ability) {
@@ -232,6 +235,33 @@
         engineAbility
       )),
       (myPlayer2 = new Player(
+        "P2",
+        "MidField",
+        "Starter",
+        30,
+        30,
+        30,
+        engineAbility
+      )),
+      (myPlayer3 = new Player(
+        "P3",
+        "MidField",
+        "Starter",
+        20,
+        30,
+        40,
+        engineAbility
+      )),
+      (myPlayer4 = new Player(
+        "P4",
+        "Striker",
+        "Starter",
+        40,
+        20,
+        30,
+        engineAbility
+      )),
+      (myPlayer5 = new Player(
         "Stop De'Ball",
         "Goalkeeper",
         "Starter",
@@ -282,16 +312,32 @@
         { Move: 1 },
         ["Marked"]
       )),
+      (myCard6 = new Card(
+        "Tactician",
+        "Manager",
+        "Common",
+        "Discard your hand, Draw 2 cards",
+        { Discard: 100, Draw: 2 },
+        []
+      )),
+      (myCard7 = new Card(
+        "Morale Boost",
+        "Manager",
+        "Common",
+        "+10 passing this turn to all players",
+        { StatChange: [{ passing: 10, type: "positive", duration: 1 }] },
+        []
+      )),
       (TempCard = new Card("TempCard", "None", "None", "None", {}, [])),
     ];
 
     userData = {
       players: [
-        { team: "player1", player: myPlayer2, position: "" },
+        { team: "player1", player: myPlayer5, position: "" },
         { team: "player1", player: myPlayer, position: "mid:0" },
-        { team: "player1", player: myPlayer, position: "top:1" },
-        { team: "player1", player: myPlayer, position: "mid:2" },
-        { team: "player1", player: myPlayer, position: "bottom:1" },
+        { team: "player1", player: myPlayer2, position: "top:1" },
+        { team: "player1", player: myPlayer3, position: "bottom:1" },
+        { team: "player1", player: myPlayer4, position: "mid:2" },
       ],
       //need to make clones of the cards or im using the orignal object
       cards: [
@@ -302,6 +348,8 @@
         $.extend(true, {}, myCard2),
         $.extend(true, {}, myCard3),
         $.extend(true, {}, myCard5),
+        $.extend(true, {}, myCard6),
+        $.extend(true, {}, myCard7),
       ],
       draw: [],
       hand: [],
@@ -322,6 +370,8 @@
       playerScore = 0;
       cpuScore = 0;
       turnCounter = 1;
+      matchTime = 00;
+      statChanges = [];
 
       oppositionData = getOpposition();
       addPlayersToPitch(oppositionData.players);
@@ -357,7 +407,7 @@
       $("#discardHolder").append(discard);
       $("#discardHolder").append(discardCount);
 
-      for (var i = 0; i < 5; i++) {
+      for (var i = 0; i < 3; i++) {
         drawCard();
       }
       UpdateCardsKeyWords();
@@ -752,6 +802,17 @@
           }
           activateAbility(card);
           break;
+        case "Discard":
+          if (val == 100) {
+            discardHand();
+          } else {
+            //discard val amount of cards cards
+            for (var i = 0; i < val; i++) {
+              //TODO: make for random discard and selected discard
+            }
+          }
+          activateAbility(card);
+          break;
         case "Shoot":
           var randGoalChance = Math.floor(Math.random() * 100);
           var goalSuccess = getGoalChance();
@@ -831,6 +892,15 @@
 
           activateAbility(card);
           break;
+        case "StatChange":
+          //Stat changing card
+          //for each change
+          val.forEach((change) => {
+            updateStatChange(change);
+          });
+
+          activateAbility(card);
+          break;
         default:
           //finished running card abilities
           //console.log("no ability: ", ability);
@@ -881,6 +951,8 @@
           userData.discard.push(card);
 
           $("#discardCount").text(userData.discard.length);
+          matchTime = matchTime + 4;
+          $("#matchTime").html(matchTime);
         }
 
         var refreshIntervalId = setInterval(function () {
@@ -898,6 +970,7 @@
     function endTurn() {
       console.log("end turn");
       turnCounter++;
+      updateStatChange();
       discardHand();
       $(".endButton").prop("disabled", true);
     }
@@ -924,10 +997,10 @@
     function getOpposition() {
       return {
         players: [
-          { team: "cpu", player: myPlayer2, position: "" },
-          { team: "cpu", player: myPlayer, position: "mid:3" },
-          { team: "cpu", player: myPlayer, position: "mid:4" },
-          { team: "cpu", player: myPlayer, position: "top:4" },
+          { team: "cpu", player: myPlayer5, position: "" },
+          { team: "cpu", player: myPlayer4, position: "mid:3" },
+          { team: "cpu", player: myPlayer2, position: "mid:4" },
+          { team: "cpu", player: myPlayer3, position: "top:4" },
           { team: "cpu", player: myPlayer, position: "bottom:4" },
         ],
         cards: {},
@@ -1119,6 +1192,51 @@
       }
 
       return goalSuccess;
+    }
+
+    function updateStatChange(newChange) {
+      var playerPos = getPlayerPositions();
+
+      //new stat change
+      if (newChange) {
+        var changeTo = Object.keys(newChange)[0];
+        var changeVal = Object.values(newChange)[0];
+        var duration = newChange.duration;
+
+        commentate("The manager's words seems to have influenced the game");
+        playerPos.forEach((position) => {
+          // prettier-ignore
+          player = gamePitch[position.row][position.col].find((player) => player.team == "player1");
+          if (newChange.type == "positive") {
+            player.player[changeTo] = player.player[changeTo] + changeVal;
+          } else {
+            player.player[changeTo] = player.player[changeTo] - changeVal;
+          }
+        });
+
+        newChange.endOnTurn = turnCounter + duration;
+        statChanges.push(newChange);
+      } else {
+        //remove changes that have expired
+        statChanges.forEach((oldChange) => {
+          var changeTo = Object.keys(oldChange)[0];
+          var changeVal = Object.values(oldChange)[0];
+
+          if (oldChange.endOnTurn == turnCounter) {
+            playerPos.forEach((position) => {
+              // prettier-ignore
+              player = gamePitch[position.row][position.col].find((player) => player.team == "player1");
+              if (oldChange.type == "positive") {
+                player.player[changeTo] = player.player[changeTo] - changeVal;
+              } else {
+                player.player[changeTo] = player.player[changeTo] + changeVal;
+              }
+            });
+          }
+
+          statChanges = statChanges.filter((change) => change != oldChange);
+        });
+      }
     }
 
     function cellToPitch(index) {
