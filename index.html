@@ -272,7 +272,7 @@
       )),
     ];
     allCards = [
-      (myCard = new Card(
+      (PushUp = new Card(
         "Push Up",
         "Movement",
         "Common",
@@ -280,7 +280,7 @@
         { Move: 1, Draw: 1 },
         []
       )),
-      (myCard2 = new Card(
+      (ShortPass = new Card(
         "Short pass",
         "Attack",
         "Common",
@@ -288,7 +288,7 @@
         { Pass: 1 },
         ["PlayerHasBall"]
       )),
-      (myCard3 = new Card(
+      (Shoot = new Card(
         "Shoot",
         "Attack",
         "Common",
@@ -296,7 +296,7 @@
         { Shoot: 1 },
         ["PlayerHasBall"]
       )),
-      (myCard4 = new Card(
+      (Cross = new Card(
         "Cross",
         "Attack",
         "Common",
@@ -304,7 +304,7 @@
         { Cross: 1 },
         ["PlayerHasBall", "PlayerOnWing"]
       )),
-      (myCard5 = new Card(
+      (LoseYourMan = new Card(
         "Lose your man",
         "Movement",
         "Common",
@@ -312,7 +312,7 @@
         { Move: 1 },
         ["Marked"]
       )),
-      (myCard6 = new Card(
+      (Tactician = new Card(
         "Tactician",
         "Manager",
         "Common",
@@ -320,7 +320,7 @@
         { Discard: 100, Draw: 2 },
         []
       )),
-      (myCard7 = new Card(
+      (MoraleBoost = new Card(
         "Morale Boost",
         "Manager",
         "Common",
@@ -341,15 +341,15 @@
       ],
       //need to make clones of the cards or im using the orignal object
       cards: [
-        $.extend(true, {}, myCard),
-        $.extend(true, {}, myCard),
-        $.extend(true, {}, myCard2),
-        $.extend(true, {}, myCard4),
-        $.extend(true, {}, myCard2),
-        $.extend(true, {}, myCard3),
-        $.extend(true, {}, myCard5),
-        $.extend(true, {}, myCard6),
-        $.extend(true, {}, myCard7),
+        $.extend(true, {}, PushUp),
+        $.extend(true, {}, PushUp),
+        $.extend(true, {}, ShortPass),
+        $.extend(true, {}, ShortPass),
+        $.extend(true, {}, Shoot),
+        $.extend(true, {}, Cross),
+        $.extend(true, {}, LoseYourMan),
+        $.extend(true, {}, Tactician),
+        $.extend(true, {}, MoraleBoost),
       ],
       draw: [],
       hand: [],
