@@ -545,8 +545,8 @@
           ballCell.on("click", function () {
             ballElem = $(this);
             //get position
-            var cellIndex = ballElem[0].cellIndex;
-            var rowIndex = ballElem[0].parentNode.rowIndex;
+            var cellIndex = ballElem.closest("td")[0].cellIndex;
+            var rowIndex = ballElem.closest("td")[0].parentNode.rowIndex;
             var directions = [];
 
             for (var i = 1; i < val + 1; i++) {
@@ -594,8 +594,8 @@
                   var randPassChance = Math.floor(Math.random() * 100);
 
                   //move the ball
-                  var dirCellIndex = dir[0].cellIndex;
-                  var dirRowIndex = dir[0].parentNode.rowIndex;
+                  var dirCellIndex = dir.closest("td")[0].cellIndex;
+                  var dirRowIndex = dir.closest("td")[0].parentNode.rowIndex;
                   dirRow = cellToPitch(dirRowIndex);
 
                   //console.log("chance of passing | ", "value needed to pass");
@@ -731,8 +731,8 @@
             playerElem = $(e);
 
             //get position
-            var cellIndex = playerElem[0].cellIndex;
-            var rowIndex = playerElem[0].parentNode.rowIndex;
+            var cellIndex = playerElem.closest("td")[0].cellIndex;
+            var rowIndex = playerElem.closest("td")[0].parentNode.rowIndex;
 
             var directions = [];
 
