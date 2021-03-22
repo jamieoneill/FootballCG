@@ -61,7 +61,7 @@
       .card {
         box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
         width: 150px;
-        display: inline-block;
+        display: inline-table;
         background: #fff;
         margin-left: 10px;
         margin-right: 10px;
@@ -70,12 +70,17 @@
         transition: top ease 0.5s;
       }
       .draw:hover,
-      .hand:hover,
       .discard:hover {
         box-shadow: 0px 0px 14px 0px cyan;
       }
       .hand:hover {
         top: -10px;
+      }
+      .playable:hover {
+        box-shadow: 0px 0px 14px 0px greenyellow;
+      }
+      .unplayable:hover {
+        box-shadow: 0px 0px 14px 0px red;
       }
       img {
         -webkit-user-drag: none;
@@ -425,9 +430,26 @@
       userData.draw.splice(0, 1);
       userData.hand.push(card);
 
+      var playCardStatus = true;
+      card.playable.forEach((check) => {
+        var canPlayCard = checkCardIsPlayable(check);
+        if (canPlayCard.reason) {
+          playCardStatus = canPlayCard.reason;
+        }
+      });
+
+      var playable = "";
+      if (playCardStatus == true) {
+        playable = "playable";
+      } else {
+        playable = "unplayable";
+      }
+
       var html =
         `
-        <div class="card hand"  onclick="playCard(this)">
+        <div class="card hand ` +
+        playable +
+        `"  onclick="playCard(this)">
         <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
         <div>
           <h4><b> ` +
@@ -1178,8 +1200,13 @@
 
       // prettier-ignore
       attackingPlayer = gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "player1"});
-      //take attackers attack stat and add success chance by that much.
-      goalSuccess = goalSuccess + attackingPlayer.player.attack;
+      if (attackingPlayer) {
+        //take attackers attack stat and add success chance by that much.
+        goalSuccess = goalSuccess + attackingPlayer.player.attack;
+      } else {
+        goalSuccess = 0;
+        return goalSuccess;
+      }
 
       //player is not centered
       if (ballPos.row != "mid") {
