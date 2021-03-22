@@ -53,6 +53,9 @@ body {
 .discard:hover {
   box-shadow: 0px 0px 14px 0px cyan;
 }
+.hand{
+    height: 100%;
+}
 .hand:hover {
   top: -10px;
 }
