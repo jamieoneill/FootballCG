@@ -1,0 +1,124 @@
+body {
+  background: hsl(0, 0%, 90%);
+  display: flex;
+  min-height: 98vh;
+  flex-direction: column;
+}
+.container {
+  /*flex: 1;*/
+  padding: 2px 16px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+#pitch {
+  border: 1px solid #000;
+  /*background-image: url("images\\pitch.jpg");
+    background-repeat: no-repeat;
+    */
+  background-color: white;
+  height: 500px;
+  flex-grow: 1;
+  text-align: center;
+  vertical-align: middle;
+}
+#pitch td {
+  border: 1px solid #aaaaaa;
+  min-width: 0px;
+  max-width: 0px;
+  text-align: center;
+}
+#allCardHolder {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+#drawHolder,
+#handHolder,
+#discardHolder {
+  text-align: center;
+}
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  width: 150px;
+  display: inline-table;
+  background: #fff;
+  margin-left: 10px;
+  margin-right: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: top ease 0.5s;
+}
+.draw:hover,
+.discard:hover {
+  box-shadow: 0px 0px 14px 0px cyan;
+}
+.hand:hover {
+  top: -10px;
+}
+.playable:hover {
+  box-shadow: 0px 0px 14px 0px greenyellow;
+}
+.unplayable:hover {
+  box-shadow: 0px 0px 14px 0px red;
+}
+img {
+  -webkit-user-drag: none;
+}
+.buttonHolder {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.buttonHolder > * {
+  padding: 10px;
+  flex: 1 100%;
+}
+.alilityButton {
+  order: 1;
+  flex: 1 0 0;
+  padding: 5px;
+  margin: 20px;
+  width: 150px;
+  text-align: center;
+  background: deepskyblue;
+}
+.commentaryBox {
+  order: 2;
+  flex: 3 0px;
+}
+.endButton {
+  padding: 5px;
+  order: 3;
+  flex: 1 0 0;
+  margin: 20px;
+  width: 150px;
+  text-align: center;
+  background: deepskyblue;
+}
+.scoreHolder {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  background: #000000;
+}
+.scoreHolder li {
+  text-decoration: none;
+  display: block;
+  padding: 1em;
+  border: 1px solid #000000;
+  background: #ffffff;
+}
+.scoreHolder li:hover {
+  background: #ffffff;
+}
+#playerTeamName {
+  background: #286ffe;
+}
+#cpuTeamName {
+  background: #ff0e00;
+}
