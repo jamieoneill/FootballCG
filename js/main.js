@@ -666,7 +666,7 @@ function activateAbility(card) {
       break;
     case "Discard":
       if (val == 100) {
-        discardHand();
+        discardHand(card);
       } else {
         //discard val amount of cards cards
         for (var i = 0; i < val; i++) {
@@ -843,14 +843,15 @@ function shuffleDiscardToDraw() {
   $("#discardCount").text(userData.discard.length);
 }
 
-function discardHand() {
-  $(".hand").fadeOut("slow", function () {
-    userData.hand.forEach((card) => {
+function discardHand(excludeCard) {
+  userData.hand.forEach((card) => {
+    if (card != excludeCard) {
       userData.discard.push(card);
-    });
-    userData.hand = [];
-    $("#discardCount").text(userData.discard.length);
+    }
   });
+  userData.hand = [];
+  $("#discardCount").text(userData.discard.length);
+  $(".hand").fadeOut("fast");
 }
 
 //TODO: generate new opposition for each match
