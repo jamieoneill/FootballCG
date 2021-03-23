@@ -14,153 +14,6 @@ var turnCounter;
 var matchTime;
 var statChanges;
 
-class Player {
-  constructor(name, position, rarity, attack, defence, passing, ability) {
-    this.name = name;
-    this.position = position;
-    this.rarity = rarity;
-    this.attack = attack;
-    this.defence = defence;
-    this.passing = passing;
-    this.ability = ability;
-  }
-}
-
-class Card {
-  constructor(name, type, rarity, text, ability, playable) {
-    this.name = name;
-    this.type = type;
-    this.rarity = rarity;
-    this.text = text;
-    this.ability = ability;
-    this.playable = playable;
-  }
-}
-
-class PlayerAbility {
-  constructor(name, description, ability, appliesTo) {
-    this.name = name;
-    this.description = description;
-    this.ability = ability;
-    this.appliesTo = appliesTo;
-  }
-}
-
-allPlayerAbilities = [
-  (engineAbility = new PlayerAbility(
-    "Engine",
-    "Move this player up to 3 spaces in any direction",
-    { Move: 3 },
-    "self"
-  )),
-];
-allPlayers = [
-  (myPlayer = new Player(
-    "Pele De'Ball",
-    "Defender",
-    "Starter",
-    20,
-    40,
-    20,
-    engineAbility
-  )),
-  (myPlayer2 = new Player(
-    "P2",
-    "MidField",
-    "Starter",
-    30,
-    30,
-    30,
-    engineAbility
-  )),
-  (myPlayer3 = new Player(
-    "P3",
-    "MidField",
-    "Starter",
-    20,
-    30,
-    40,
-    engineAbility
-  )),
-  (myPlayer4 = new Player(
-    "P4",
-    "Striker",
-    "Starter",
-    40,
-    20,
-    30,
-    engineAbility
-  )),
-  (myPlayer5 = new Player(
-    "Stop De'Ball",
-    "Goalkeeper",
-    "Starter",
-    0,
-    30,
-    0,
-    null
-  )),
-];
-allCards = [
-  (PushUp = new Card(
-    "Push Up",
-    "Movement",
-    "Common",
-    "Move 1 player 1 position, Draw 1 card",
-    { Move: 1, Draw: 1 },
-    []
-  )),
-  (ShortPass = new Card(
-    "Short pass",
-    "Attack",
-    "Common",
-    "Pass the ball 1 space",
-    { Pass: 1 },
-    ["PlayerHasBall"]
-  )),
-  (Shoot = new Card(
-    "Shoot",
-    "Attack",
-    "Common",
-    "Shoot, GoalChance for success",
-    { Shoot: 1 },
-    ["PlayerHasBall"]
-  )),
-  (Cross = new Card(
-    "Cross",
-    "Attack",
-    "Common",
-    "Cross 1 space, Will always pass accurately",
-    { Cross: 1 },
-    ["PlayerHasBall", "PlayerOnWing"]
-  )),
-  (LoseYourMan = new Card(
-    "Lose your man",
-    "Movement",
-    "Common",
-    "If marked move 1 space",
-    { Move: 1 },
-    ["Marked"]
-  )),
-  (Tactician = new Card(
-    "Tactician",
-    "Manager",
-    "Common",
-    "Discard your hand, Draw 2 cards",
-    { Discard: 100, Draw: 2 },
-    []
-  )),
-  (MoraleBoost = new Card(
-    "Morale Boost",
-    "Manager",
-    "Common",
-    "+10 passing this turn to all players",
-    { StatChange: [{ passing: 10, type: "positive", duration: 1 }] },
-    []
-  )),
-  (TempCard = new Card("TempCard", "None", "None", "None", {}, [])),
-];
-
 userData = {
   players: [
     { team: "player1", player: myPlayer5, position: "" },
@@ -171,15 +24,15 @@ userData = {
   ],
   //need to make clones of the cards or im using the orignal object
   cards: [
-    $.extend(true, {}, PushUp),
-    $.extend(true, {}, PushUp),
-    $.extend(true, {}, ShortPass),
-    $.extend(true, {}, ShortPass),
-    $.extend(true, {}, Shoot),
-    $.extend(true, {}, Cross),
-    $.extend(true, {}, LoseYourMan),
-    $.extend(true, {}, Tactician),
-    $.extend(true, {}, MoraleBoost),
+    $.extend(true, {}, PushUpCard),
+    $.extend(true, {}, PushUpCard),
+    $.extend(true, {}, ShortPassCard),
+    $.extend(true, {}, ShortPassCard),
+    $.extend(true, {}, ShootCard),
+    $.extend(true, {}, CrossCard),
+    $.extend(true, {}, LoseYourManCard),
+    $.extend(true, {}, TacticianCard),
+    $.extend(true, {}, MoraleBoostCard),
   ],
   draw: [],
   hand: [],
