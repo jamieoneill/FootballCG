@@ -16,38 +16,200 @@
       href="https://cdn.jsdelivr.net/gh/StephanWagner/jBox@v1.2.0/dist/jBox.all.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+      crossorigin="anonymous"
+    ></script>
+
     <link href="../style/style.css" rel="stylesheet" />
   </head>
 
   <body>
-    <ul class="scoreHolder">
-      <li id="playerTeamName">Team Blue</li>
-      <li id="playerScore">0</li>
-      <li><label id="matchTime">00</label><label>:00</label></li>
-      <li id="cpuScore">0</li>
-      <li id="cpuTeamName">Team Red</li>
-    </ul>
-    <main class="container">
-      <table id="pitch"></table>
+    <!-- Home Menu View-->
+    <main id="Home" class="homeContainer">
+      <div class="title">
+        <h1>FOOTBALL CARD GAME</h1>
+      </div>
+      <div>
+        <button class="homeButton" id="newGameBtn">New Game</button>
+        <button class="homeButton" id="loadGameBtn">Load</button>
+      </div>
+      <div>
+        <button class="homeButton" id="howToPlayBtn">How To Play</button>
+        <button class="homeButton" id="settingsBtn">Settings</button>
+        <button class="homeButton" id="feedbackBtn">Feedback</button>
+      </div>
     </main>
-    <div class="buttonHolder">
-      <button class="alilityButton">Activate Alility</button>
-      <textarea
-        class="commentaryBox"
-        name="commentary"
-        id="commentary"
-      ></textarea>
-      <button class="endButton">End Turn</button>
+
+    <!-- Main Menu View-->
+    <div id="Main" style="display: none">
+      <main class="menuContainer">
+        <div class="row justify-content-between">
+          <div class="col-auto">
+            <h1>My Team</h1>
+            <div class="d-grid gap-2 col-6 mx-auto">
+              <button class="btn btn-primary" id="viewPlayersBtn" type="button">
+                Players
+              </button>
+              <button class="btn btn-primary" id="viewCardsBtn" type="button">
+                Cards
+              </button>
+              <button class="btn btn-primary" id="viewFormationBtn" type="button">
+                Formation
+              </button>
+            </div>
+          </div>
+          <div class="col-auto">
+            <h1>League Table</h1>
+            <div class="menuItem">
+              <table class="table table-dark table-bordered">
+                <thead>
+                  <th>Team</th>
+                  <th>Wins</th>
+                  <th>Loses</th>
+                  <th>Pts</th>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Team 1</td>
+                    <td>1</td>
+                    <td>0</td>
+                    <td>3</td>
+                  </tr>
+                  <tr>
+                    <td>Team 2</td>
+                    <td>0</td>
+                    <td>1</td>
+                    <td>0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col-xl-4 col-lg-4">
+            <div class="card text-center">
+              <div class="card-header">Next Match</div>
+              <div class="card-body">
+                <div class="part-team">
+                  <div class="single-team">
+                    <div class="logo">
+                      <img
+                        src="https://icons.iconarchive.com/icons/giannis-zographos/english-football-club/128/Wolverhampton-Wanderers-icon.png"
+                        alt="team logo"
+                      />
+                    </div>
+                    <span class="team-name">Player Team</span>
+                  </div>
+                  <div class="match-details">
+                    <div>
+                      <span>Wed 24 Mar 2021</span>
+                    </div>
+                    <span class="versase">vs</span>
+                    <div>
+                      <button class="playMatchBtn" id="playMatchBtn">Play Match</button>
+                    </div>
+                  </div>
+                  <div class="single-team">
+                    <div class="logo">
+                      <img
+                        src="https://icons.iconarchive.com/icons/giannis-zographos/english-football-club/128/Norwich-City-icon.png"
+                        alt="team logo"
+                      />
+                    </div>
+                    <span class="team-name">CPU Team</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
-    <div id="allCardHolder">
-      <div id="drawHolder"></div>
-      <div id="handHolder"></div>
-      <div id="discardHolder"></div>
+
+    <!-- Match View-->
+    <div id="matchGame" class="menuContainer" style="display: none">
+      <ul class="scoreHolder">
+        <li id="playerTeamName">Team Blue</li>
+        <li id="playerScore">0</li>
+        <li><label id="matchTime">00</label><label>:00</label></li>
+        <li id="cpuScore">0</li>
+        <li id="cpuTeamName">Team Red</li>
+      </ul>
+      <main class="pitchContainer">
+        <table id="pitch"></table>
+      </main>
+      <div class="buttonHolder">
+        <button class="alilityButton">Activate Alility</button>
+        <textarea
+          class="commentaryBox"
+          name="commentary"
+          id="commentary"
+        ></textarea>
+        <button class="endButton">End Turn</button>
+      </div>
+      <div id="allCardHolder">
+        <div id="drawHolder"></div>
+        <div id="handHolder"></div>
+        <div id="discardHolder"></div>
+      </div>
     </div>
   </body>
-  
+
+  <!-- Modal -->
+  <div
+    class="modal fade"
+    id="overlayModal"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    aria-labelledby="staticBackdropLabel"
+    aria-hidden="true"
+  >
+    <div
+      id="overlayModalDialog"
+      class="modal-dialog modal-dialog-scrollable modal-xl"
+    ></div>
+
+    <div id="closeModal">
+      <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Formation View-->
+  <table id="formation" class="table table-bordered">
+    <tbody>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
   <script src="../data/PlayerAbility.js"></script>
   <script src="../data/Player.js"></script>
   <script src="../data/Card.js"></script>
+  <script src="../data/UserData.js"></script>
   <script src="../js/main.js"></script>
 </html>

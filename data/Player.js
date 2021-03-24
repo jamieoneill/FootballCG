@@ -18,7 +18,7 @@ allPlayers = [
     20,
     40,
     20,
-    engineAbility
+    null
   )),
   (myPlayer2 = new Player(
     "P2",
@@ -45,7 +45,7 @@ allPlayers = [
     40,
     20,
     30,
-    engineAbility
+    null
   )),
   (myPlayer5 = new Player(
     "Stop De'Ball",

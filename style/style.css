@@ -1,11 +1,161 @@
 body {
   background: hsl(0, 0%, 90%);
   display: flex;
-  min-height: 98vh;
   flex-direction: column;
+  overflow: hidden;
 }
-.container {
-  /*flex: 1;*/
+
+table th,
+table td {
+  height: 30px;
+  width: 200px;
+}
+table span {
+  display: block;
+  background-color: #09c;
+  height: 100%;
+  width: 100%;
+}
+
+/* Home */
+.homeContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #fff;
+}
+.title {
+  text-transform: capitalize;
+  text-shadow: 2px 2px 4px #000;
+  color: #bfbfbf;
+  font: bold 3vw Helvetica, Arial, Sans-Serif;
+  text-shadow: 1px 1px #4caf50, 2px 2px #4caf50, 3px 3px #4caf50,
+    4px 4px #4caf50, 5px 5px #4caf50, 6px 6px #4caf50;
+}
+.homeButton {
+  background-color: #4caf50;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  font-size: 20px;
+  cursor: pointer;
+  width: 200px;
+  margin: 10px;
+  text-align: center;
+  outline: none;
+}
+
+/* Main Menu */
+.menuContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #fff;
+  padding: 10px;
+}
+.menuItem {
+  display: flex;
+  padding: 5px;
+  overflow: auto;
+  height: 33vh;
+  width: 25vw;
+}
+#overlayModalDialog {
+  height: calc(80% - 1rem);
+}
+#overlayModalDialog > * {
+  margin: 10px;
+  height: 302px;
+}
+#formation {
+  vertical-align: middle;
+  background: #fff;
+  text-align: center;
+}
+#closeModal {
+  position: fixed;
+  right: 7vw;
+  bottom: 10vh;
+}
+
+.part-team {
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  height: 80px;
+  margin-bottom: 22px;
+}
+.logo img {
+  height: 100%;
+}
+
+.versase {
+  font-size: 18px;
+  font-weight: 500;
+  display: inline-block;
+  position: relative;
+  background: #fff;
+  width: 40px;
+  height: 40px;
+  line-height: 34px;
+  border-radius: 50%;
+  color: #c40c49;
+  border: 2px solid rgba(56, 56, 56, 0.3);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.versase:after {
+  position: absolute;
+  content: "";
+  left: 50%;
+  /* -webkit-transform: translateX(-50%); */
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  top: 50%;
+  width: 170px;
+  margin-top: -1px;
+  height: 2px;
+  background: rgba(56, 56, 56, 0.3);
+  z-index: -1;
+}
+
+.team-name {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 14px;
+  color: #383838;
+  display: block;
+}
+
+.card {
+  z-index: 0;
+}
+
+.playMatchBtn {
+  background: #2a2a2a;
+  color: #fff;
+  width: 110px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0;
+  display: inline-block;
+  text-transform: uppercase;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* Match */
+.pitchContainer {
   padding: 2px 16px;
   align-items: center;
   display: flex;
@@ -38,7 +188,7 @@ body {
 #discardHolder {
   text-align: center;
 }
-.card {
+.playingCard {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   width: 150px;
   display: inline-table;
@@ -53,8 +203,9 @@ body {
 .discard:hover {
   box-shadow: 0px 0px 14px 0px cyan;
 }
-.hand{
-    height: 100%;
+.hand {
+  height: 100%;
+  text-align: center;
 }
 .hand:hover {
   top: -10px;
