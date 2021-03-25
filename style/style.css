@@ -5,18 +5,6 @@ body {
   overflow: hidden;
 }
 
-table th,
-table td {
-  height: 30px;
-  width: 200px;
-}
-table span {
-  display: block;
-  background-color: #09c;
-  height: 100%;
-  width: 100%;
-}
-
 /* Home */
 .homeContainer {
   display: flex;
@@ -64,11 +52,23 @@ table span {
 }
 #overlayModalDialog {
   height: calc(80% - 1rem);
+  display: flex;
+  justify-content: center;
+  flex-flow: wrap;
 }
 #overlayModalDialog > * {
   margin: 10px;
   height: 302px;
 }
+
+.modal-body {
+  padding: 1%;
+}
+.modal-content {
+  background: transparent;
+  border: none;
+}
+
 #formation {
   vertical-align: middle;
   background: #fff;
@@ -92,9 +92,6 @@ table span {
 .logo {
   height: 80px;
   margin-bottom: 22px;
-}
-.logo img {
-  height: 100%;
 }
 
 .versase {
@@ -270,9 +267,18 @@ img {
 .scoreHolder li:hover {
   background: #ffffff;
 }
-#playerTeamName {
-  background: #286ffe;
-}
-#cpuTeamName {
-  background: #ff0e00;
+.playerIcon {
+  font-size: 18px;
+  font-weight: 500;
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  line-height: 34px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  font-style: italic;
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
 }

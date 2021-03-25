@@ -2,13 +2,15 @@
 $("#newGameBtn").on("click", function () {
   $("#Home").hide();
   $("#Main").show();
+  $("#displayTeamName").text(userData.team.name);
+  scrollToTeam();
 });
 
 $("#loadGameBtn").on("click", function () {
   //load game
   $("#Home").hide();
   $("#matchGame").show();
-  startMatch();
+  startMatch({ team1: "Tottenham", team2: "Burnley" });
 
   /*
   new jBox("Modal", {
@@ -54,7 +56,7 @@ $("#feedbackBtn").on("click", function () {
 $("#viewPlayersBtn").on("click", function () {
   $("#overlayModalDialog").empty();
 
-  userData.players.forEach((player) => {
+  userData.team.players.forEach((player) => {
     $(renderCard("Player", player)).appendTo("#overlayModalDialog");
   });
 
@@ -78,7 +80,7 @@ $("#viewCardsBtn").on("click", function () {
 $("#viewFormationBtn").on("click", function () {
   $("#overlayModalDialog").empty();
 
-  userData.players.forEach((player) => {
+  userData.team.players.forEach((player) => {
     cell = $(
       "#formation tr:eq(" +
         pitchToCell(player.position.split(":")[0]) +
@@ -87,7 +89,8 @@ $("#viewFormationBtn").on("click", function () {
         ")"
     );
     cell.data("playerData", player);
-    cell.html(getPlayerIcon(player));
+    cell.html(getPlayerIcon(player)
+    );
   });
 
   $("#formation").clone().appendTo("#overlayModalDialog");
@@ -100,8 +103,46 @@ $("#viewFormationBtn").on("click", function () {
 $("#playMatchBtn").on("click", function () {
   $("#Main").hide();
   $("#matchGame").show();
-  startMatch();
+  startMatch({ team1: "Tottenham", team2: "Burnley" });
 });
+
+allTeams.sort(function (a, b) {
+  return b.points - a.points;
+});
+
+$("#leagueTable tbody").empty();
+
+allTeams.forEach((Team, index) => {
+  if (Team.name == userData.team.name) {
+    var html = "<tr id='userTeamInTable' class='table-success'>";
+  } else {
+    var html = "<tr>";
+  }
+
+  html += "<td>" + (index + 1) + "</td>";
+
+  html +=
+    "<td> <img src='../images/teamIcons/" +
+    Team.name.replace(" ", "-") +
+    ".png' style='height: 24px; width: 24px;'></img> " +
+    Team.name +
+    "</td>";
+  html += "<td>" + Team.played + "</td>";
+  html += "<td>" + Team.points + "</td>";
+  html += "</tr>";
+
+  $("#leagueTable tbody").append(html);
+});
+
+function scrollToTeam() {
+  var teamInTable = document.getElementById("userTeamInTable");
+
+  teamInTable.scrollIntoView({
+    behavior: "auto",
+    block: "center",
+    inline: "nearest",
+  });
+}
 
 // MATCH //
 const pitch = {
@@ -136,11 +177,26 @@ function startMatch(options) {
     discard: [],
   };
 
-  oppositionData = getOpposition();
+  //set team data to players
+  userData.team.players.forEach((player) => {
+    player.team = "player1";
+    player.colorPrimary = userData.team.colorPrimary;
+    player.colorAccent = userData.team.colorAccent;
+  });
+
+  //add opponents
+  oppositionData = getOpposition(options.team2);
   addPlayersToPitch(oppositionData.players);
+
   matchData.gamePitch.mid["2"].push({ team: "ball" }); //Add the Ball as its own team (lazy, i know)
   displayGamePitch();
   console.table(matchData.gamePitch);
+
+  //set team names
+  // prettier-ignore
+  $("#playerTeamName").html("<img src='../images/teamIcons/" +userData.team.name.replace(" ", "-") +".png' style='height: 24px; width: 24px;'></img> " + userData.team.name).css("background", userData.team.colorPrimary).css("color", userData.team.colorAccent);
+  // prettier-ignore
+  $("#cpuTeamName").html(oppositionData.name + " <img src='../images/teamIcons/" +oppositionData.name.replace(" ", "-") +".png' style='height: 24px; width: 24px;'></img>").css("background", oppositionData.colorPrimary).css("color", oppositionData.colorAccent);
 
   var temp = JSON.parse(JSON.stringify(userData.cards)); //copy users cards to this game
   matchData.draw = shuffleArray(temp);
@@ -784,25 +840,22 @@ function discardHand(excludeCard) {
   $(".hand").fadeOut("fast");
 }
 
-//TODO: generate new opposition for each match
-function getOpposition() {
-  return {
-    players: [
-      { team: "cpu", player: myPlayer5, position: "" },
-      { team: "cpu", player: myPlayer4, position: "mid:3" },
-      { team: "cpu", player: myPlayer2, position: "mid:4" },
-      { team: "cpu", player: myPlayer3, position: "top:4" },
-      { team: "cpu", player: myPlayer, position: "bottom:4" },
-    ],
-    cards: {},
-  };
+function getOpposition(teamToFetch) {
+  team = allTeams.find((team) => team.name == teamToFetch);
+  team.players.forEach((player) => {
+    player.team = "cpu";
+    player.colorPrimary = team.colorPrimary;
+    player.colorAccent = team.colorAccent;
+  });
+  return team;
 }
 
 function addPlayersToPitch(oppositionFormation) {
   matchData.gamePitch = $.extend(true, {}, pitch);
 
   //add user formation
-  userData.players.forEach((player) => {
+  userData.team.players.forEach((player) => {
+    console.log(player);
     if (player.player.position != "Goalkeeper") {
       pos = player.position.split(":");
       matchData.gamePitch[pos[0]][pos[1]].push(player);
@@ -834,7 +887,7 @@ function displayGamePitch() {
       html += "</td>";
     });
     html += "</tr>";
-    //$("#pitch").last().data("card", card);
+
     $("#pitch").append(html);
   });
 
@@ -854,17 +907,21 @@ function displayGamePitch() {
 
 function getPlayerIcon(player) {
   switch (player.team) {
-    case "player1":
-      return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/blue.png">';
-      break;
-    case "cpu":
-      return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/red.png">';
-      break;
     case "ball":
       return '<img src="https://raw.githubusercontent.com/jamieoneill/FootballCG/main/images/ball.png">';
       break;
     default:
-      return "";
+      return (
+        '<span class="playerIcon" style="background: ' +
+        player.colorPrimary +
+        "; color: " +
+        player.colorAccent +
+        ";   border: 2px solid " +
+        player.colorAccent +
+        ';">' +
+        player.player.number +
+        "</span>"
+      );
       break;
   }
 }

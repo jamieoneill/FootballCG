@@ -1,5 +1,5 @@
 class Player {
-  constructor(name, position, rarity, attack, defence, passing, ability) {
+  constructor(name, position, rarity, attack, defence, passing, ability, number) {
     this.name = name;
     this.position = position;
     this.rarity = rarity;
@@ -7,6 +7,7 @@ class Player {
     this.defence = defence;
     this.passing = passing;
     this.ability = ability;
+    this.number = number;
   }
 }
 
@@ -18,7 +19,8 @@ allPlayers = [
     20,
     40,
     20,
-    null
+    null,
+    2
   )),
   (myPlayer2 = new Player(
     "P2",
@@ -27,7 +29,8 @@ allPlayers = [
     30,
     30,
     30,
-    engineAbility
+    engineAbility,
+    6
   )),
   (myPlayer3 = new Player(
     "P3",
@@ -36,7 +39,8 @@ allPlayers = [
     20,
     30,
     40,
-    engineAbility
+    engineAbility,
+    8
   )),
   (myPlayer4 = new Player(
     "P4",
@@ -45,7 +49,8 @@ allPlayers = [
     40,
     20,
     30,
-    null
+    null,
+    9
   )),
   (myPlayer5 = new Player(
     "Stop De'Ball",
@@ -54,6 +59,7 @@ allPlayers = [
     0,
     30,
     0,
-    null
+    null,
+    1
   )),
 ];

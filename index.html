@@ -53,7 +53,7 @@
       <main class="menuContainer">
         <div class="row justify-content-between">
           <div class="col-auto">
-            <h1>My Team</h1>
+            <h1 id="displayTeamName"></h1>
             <div class="d-grid gap-2 col-6 mx-auto">
               <button class="btn btn-primary" id="viewPlayersBtn" type="button">
                 Players
@@ -61,7 +61,11 @@
               <button class="btn btn-primary" id="viewCardsBtn" type="button">
                 Cards
               </button>
-              <button class="btn btn-primary" id="viewFormationBtn" type="button">
+              <button
+                class="btn btn-primary"
+                id="viewFormationBtn"
+                type="button"
+              >
                 Formation
               </button>
             </div>
@@ -69,27 +73,14 @@
           <div class="col-auto">
             <h1>League Table</h1>
             <div class="menuItem">
-              <table class="table table-dark table-bordered">
+              <table id="leagueTable" class="table table-light table-bordered">
                 <thead>
-                  <th>Team</th>
-                  <th>Wins</th>
-                  <th>Loses</th>
+                  <th>Pos</th>
+                  <th style="width: 50%">Team</th>
+                  <th>P</th>
                   <th>Pts</th>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td>Team 1</td>
-                    <td>1</td>
-                    <td>0</td>
-                    <td>3</td>
-                  </tr>
-                  <tr>
-                    <td>Team 2</td>
-                    <td>0</td>
-                    <td>1</td>
-                    <td>0</td>
-                  </tr>
-                </tbody>
+                <tbody></tbody>
               </table>
             </div>
           </div>
@@ -103,11 +94,11 @@
                   <div class="single-team">
                     <div class="logo">
                       <img
-                        src="https://icons.iconarchive.com/icons/giannis-zographos/english-football-club/128/Wolverhampton-Wanderers-icon.png"
+                        src="../images/teamIcons/Tottenham.png"
                         alt="team logo"
                       />
                     </div>
-                    <span class="team-name">Player Team</span>
+                    <span class="team-name">Tottenham</span>
                   </div>
                   <div class="match-details">
                     <div>
@@ -115,17 +106,19 @@
                     </div>
                     <span class="versase">vs</span>
                     <div>
-                      <button class="playMatchBtn" id="playMatchBtn">Play Match</button>
+                      <button class="playMatchBtn" id="playMatchBtn">
+                        Play Match
+                      </button>
                     </div>
                   </div>
                   <div class="single-team">
                     <div class="logo">
                       <img
-                        src="https://icons.iconarchive.com/icons/giannis-zographos/english-football-club/128/Norwich-City-icon.png"
+                        src="../images/teamIcons/Burnley.png"
                         alt="team logo"
                       />
                     </div>
-                    <span class="team-name">CPU Team</span>
+                    <span class="team-name">Burnley</span>
                   </div>
                 </div>
               </div>
@@ -138,11 +131,11 @@
     <!-- Match View-->
     <div id="matchGame" class="menuContainer" style="display: none">
       <ul class="scoreHolder">
-        <li id="playerTeamName">Team Blue</li>
+        <li id="playerTeamName"></li>
         <li id="playerScore">0</li>
         <li><label id="matchTime">00</label><label>:00</label></li>
         <li id="cpuScore">0</li>
-        <li id="cpuTeamName">Team Red</li>
+        <li id="cpuTeamName"></li>
       </ul>
       <main class="pitchContainer">
         <table id="pitch"></table>
@@ -174,13 +167,14 @@
     aria-labelledby="staticBackdropLabel"
     aria-hidden="true"
   >
-    <div
-      id="overlayModalDialog"
-      class="modal-dialog modal-dialog-scrollable modal-xl"
-    ></div>
+    <div class="modal-dialog modal-dialog-scrollable modal-xl">
+      <div class="modal-content">
+        <div id="overlayModalDialog" class="modal-body"></div>
+      </div>
+    </div>
 
     <div id="closeModal">
-      <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+      <button type="button" class="btn btn-danger btn-lg" data-bs-dismiss="modal">
         Close
       </button>
     </div>
@@ -210,6 +204,7 @@
   <script src="../data/PlayerAbility.js"></script>
   <script src="../data/Player.js"></script>
   <script src="../data/Card.js"></script>
+  <script src="../data/Team.js"></script>
   <script src="../data/UserData.js"></script>
   <script src="../js/main.js"></script>
 </html>
