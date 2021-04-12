@@ -27,4 +27,5 @@ userData = {
     $.extend(true, {}, TacticianCard),
     $.extend(true, {}, MoraleBoostCard),
   ],
+  currentEvent: events[0],
 };

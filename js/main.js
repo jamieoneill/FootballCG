@@ -100,11 +100,11 @@ $("#viewFormationBtn").on("click", function () {
   }).show();
 });
 
-$("#playMatchBtn").on("click", function () {
+function playMatch(opponent) {
   $("#Main").hide();
   $("#matchGame").show();
-  startMatch({ team1: "Tottenham", team2: "Burnley" });
-});
+  startMatch({ team1: userData.team.name, team2: opponent });
+}
 
 allTeams.sort(function (a, b) {
   return b.points - a.points;
@@ -143,6 +143,72 @@ function scrollToTeam() {
     inline: "nearest",
   });
 }
+
+//load events
+events.forEach((event) => {
+  var html = "";
+  if (event.type == "Match") {
+    html +=
+      `
+    <li class="splide__slide">
+    <div class="card text-center">
+      <div class="card-header">` +
+      event.date +
+      `</div>
+      <div class="card-body">
+        <div class="part-team">
+          <div class="single-team">
+            <div class="logo">
+              <img
+                src="../images/teamIcons/` +
+      userData.team.name +
+      `.png"
+                alt="team logo"
+              />
+            </div>
+            <span class="team-name">` +
+      userData.team.name +
+      `</span>
+          </div>
+          <div class="match-details">
+            <span class="versase">vs</span>
+            <div>
+              <button class="playMatchBtn" onclick="playMatch('` +
+      event.data.opponent +
+      `')">
+                Play Match
+              </button>
+            </div>
+          </div>
+          <div class="single-team">
+            <div class="logo">
+              <img
+                src="../images/teamIcons/` +
+      event.data.opponent.replace(" ", "-") +
+      `.png"
+                alt="team logo"
+              />
+            </div>
+            <span class="team-name">` +
+      event.data.opponent +
+      `</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>
+    `;
+  }
+  $("#eventsList").append(html);
+});
+
+var splide = new Splide("#events", {
+  perPage: 3,
+  focus: "center",
+  pagination: false,
+  speed: 800,
+  waitForTransition: false,
+}).mount();
 
 // MATCH //
 const pitch = {
@@ -205,7 +271,6 @@ function startMatch(options) {
 }
 
 function resetPitch() {
-  oppositionData = getOpposition();
   addPlayersToPitch(oppositionData.players);
 }
 
@@ -855,7 +920,6 @@ function addPlayersToPitch(oppositionFormation) {
 
   //add user formation
   userData.team.players.forEach((player) => {
-    console.log(player);
     if (player.player.position != "Goalkeeper") {
       pos = player.position.split(":");
       matchData.gamePitch[pos[0]][pos[1]].push(player);
