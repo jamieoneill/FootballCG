@@ -1,5 +1,13 @@
 class Team {
-  constructor(name, rating, played, points, players, colorAccent , colorPrimary) {
+  constructor(
+    name,
+    rating,
+    played,
+    points,
+    players,
+    colorAccent,
+    colorPrimary
+  ) {
     this.name = name;
     this.rating = rating;
     this.played = played;
@@ -26,24 +34,36 @@ allTeams = [
     "#fff",
     "#97c1e7"
   ),
-  new Team("Liverpool", "2", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+  new Team(
+    "Liverpool",
+    "2",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#fff",
-    "#dd0000",
-  ]),
-  new Team("Manchester United", "3", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+    "#dd0000"
+  ),
+  new Team(
+    "Manchester United",
+    "3",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#ffe500",
-    "#e80909",
-  ]),
+    "#e80909"
+  ),
   new Team(
     "Chelsea",
     "4",
@@ -59,42 +79,66 @@ allTeams = [
     "#fff",
     "#034694"
   ),
-  new Team("Leicester", "5", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+  new Team(
+    "Leicester",
+    "5",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#fff",
-    "#0101e8",
-  ]),
-  new Team("Tottenham", "6", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+    "#0101e8"
+  ),
+  new Team(
+    "Tottenham",
+    "6",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#132257",
-    "#fff",
-  ]),
-  new Team("Wolverhampton", "7", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+    "#fff"
+  ),
+  new Team(
+    "Wolverhampton",
+    "7",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#000000",
-    "#fdbc02",
-  ]),
-  new Team("Arsenal", "8", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+    "#fdbc02"
+  ),
+  new Team(
+    "Arsenal",
+    "8",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#fff",
-    "#ff0000",
-  ]),
+    "#ff0000"
+  ),
   new Team(
     "Sheffield United",
     "9",
@@ -125,15 +169,21 @@ allTeams = [
     "#80bfff",
     "#800000"
   ),
-  new Team("Southampton", "11", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+  new Team(
+    "Southampton",
+    "11",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#fff",
-    "#ff0000",
-  ]),
+    "#ff0000"
+  ),
   new Team(
     "Everton",
     "12",
@@ -149,15 +199,21 @@ allTeams = [
     "#fff",
     "#0d00e9"
   ),
-  new Team("Newcastle", "13", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+  new Team(
+    "Newcastle",
+    "13",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#000000",
-    "#fff",
-  ]),
+    "#fff"
+  ),
   new Team(
     "Crystal Palace",
     "14",
@@ -233,15 +289,21 @@ allTeams = [
     "#1b449c",
     "#fff"
   ),
-  new Team("Fulham", "19", 0, 0, [
-    { player: myPlayer5, position: "" },
-    { player: myPlayer, position: "mid:3" },
-    { player: myPlayer2, position: "mid:4" },
-    { player: myPlayer3, position: "top:4" },
-    { player: myPlayer4, position: "bottom:4" },
+  new Team(
+    "Fulham",
+    "19",
+    0,
+    0,
+    [
+      { player: myPlayer5, position: "" },
+      { player: myPlayer, position: "mid:3" },
+      { player: myPlayer2, position: "mid:4" },
+      { player: myPlayer3, position: "top:4" },
+      { player: myPlayer4, position: "bottom:4" },
+    ],
     "#fff",
-    "#000000",
-  ]),
+    "#000000"
+  ),
   new Team(
     "West Brom",
     "20",
