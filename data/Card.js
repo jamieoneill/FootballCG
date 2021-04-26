@@ -9,6 +9,18 @@ class Card {
   }
 }
 
+const keyWords = ["GoalChance"];
+const abilitiesList = [
+  "Move",
+  "Draw",
+  "Pass",
+  "Cross",
+  "Shoot",
+  "Draw",
+  "Discard",
+  "StatChange",
+];
+
 allCards = [
   (PushUpCard = new Card(
     "Push Up",

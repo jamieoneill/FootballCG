@@ -12,20 +12,23 @@ userData = {
       { player: myPlayer4, position: "mid:2" },
     ],
     "#132257",
-    "#fff"
+    "#fff",
+    //need to make clones of the cards or im using the orignal object
+    [
+      $.extend(true, {}, PushUpCard),
+      $.extend(true, {}, PushUpCard),
+      $.extend(true, {}, PushUpCard),
+      $.extend(true, {}, ShortPassCard),
+      $.extend(true, {}, ShortPassCard),
+      $.extend(true, {}, ShootCard),
+      $.extend(true, {}, CrossCard),
+      $.extend(true, {}, LoseYourManCard),
+      $.extend(true, {}, TacticianCard),
+      $.extend(true, {}, MoraleBoostCard),
+    ]
   ),
-  //need to make clones of the cards or im using the orignal object
-  cards: [
-    $.extend(true, {}, PushUpCard),
-    $.extend(true, {}, PushUpCard),
-    $.extend(true, {}, PushUpCard),
-    $.extend(true, {}, ShortPassCard),
-    $.extend(true, {}, ShortPassCard),
-    $.extend(true, {}, ShootCard),
-    $.extend(true, {}, CrossCard),
-    $.extend(true, {}, LoseYourManCard),
-    $.extend(true, {}, TacticianCard),
-    $.extend(true, {}, MoraleBoostCard),
-  ],
   currentEvent: events[0],
+  draw: [],
+  hand: [],
+  discard: [],
 };

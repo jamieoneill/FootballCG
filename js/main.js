@@ -68,7 +68,7 @@ $("#viewPlayersBtn").on("click", function () {
 $("#viewCardsBtn").on("click", function () {
   $("#overlayModalDialog").empty();
 
-  userData.cards.forEach((card) => {
+  userData.team.cards.forEach((card) => {
     $(renderCard("Card", card)).appendTo("#overlayModalDialog");
   });
 
@@ -216,17 +216,6 @@ const pitch = {
   mid: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
   bottom: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] },
 };
-const keyWords = ["GoalChance"];
-const abilitiesList = [
-  "Move",
-  "Draw",
-  "Pass",
-  "Cross",
-  "Shoot",
-  "Draw",
-  "Discard",
-  "StatChange",
-];
 
 function startMatch(options) {
   matchData = {
@@ -238,21 +227,23 @@ function startMatch(options) {
     turnCounter: 1,
     matchTime: 00,
     statChanges: [],
-    draw: [],
-    hand: [],
-    discard: [],
+    oppositionData: {},
   };
 
   //set team data to players
   userData.team.players.forEach((player) => {
-    player.team = "player1";
+    player.team = userData.team.name;
     player.colorPrimary = userData.team.colorPrimary;
     player.colorAccent = userData.team.colorAccent;
   });
 
   //add opponents
-  oppositionData = getOpposition(options.team2);
-  addPlayersToPitch(oppositionData.players);
+  matchData.oppositionData = getOpposition(options.team2);
+  var temp = JSON.parse(JSON.stringify(matchData.oppositionData.team.cards));
+  matchData.oppositionData.draw = shuffleArray(temp);
+  matchData.oppositionData.hand = [];
+  matchData.oppositionData.discard = [];
+  addPlayersToPitch(matchData.oppositionData.team.players);
 
   matchData.gamePitch.mid["2"].push({ team: "ball" }); //Add the Ball as its own team (lazy, i know)
   displayGamePitch();
@@ -262,59 +253,70 @@ function startMatch(options) {
   // prettier-ignore
   $("#playerTeamName").html("<img src='../images/teamIcons/" +userData.team.name.replace(" ", "-") +".png' style='height: 24px; width: 24px;'></img> " + userData.team.name).css("background", userData.team.colorPrimary).css("color", userData.team.colorAccent);
   // prettier-ignore
-  $("#cpuTeamName").html(oppositionData.name + " <img src='../images/teamIcons/" +oppositionData.name.replace(" ", "-") +".png' style='height: 24px; width: 24px;'></img>").css("background", oppositionData.colorPrimary).css("color", oppositionData.colorAccent);
+  $("#cpuTeamName").html(matchData.oppositionData.team.name + " <img src='../images/teamIcons/" +matchData.oppositionData.team.name.replace(" ", "-") +".png' style='height: 24px; width: 24px;'></img>").css("background", matchData.oppositionData.team.colorPrimary).css("color", matchData.oppositionData.team.colorAccent);
 
-  var temp = JSON.parse(JSON.stringify(userData.cards)); //copy users cards to this game
-  matchData.draw = shuffleArray(temp);
+  var temp = JSON.parse(JSON.stringify(userData.team.cards)); //copy users cards to this game
+  userData.draw = shuffleArray(temp);
 
-  drawHand();
+  drawHand(userData.team.name);
 }
 
 function resetPitch() {
-  addPlayersToPitch(oppositionData.players);
+  addPlayersToPitch(matchData.oppositionData.team.players);
 }
 
-function drawHand() {
-  var draw = `
+function drawHand(team) {
+  if (matchData.turnCounter == 1) {
+    var draw = `
       <div class="playingCard draw">
       <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
       </div>
       `;
 
-  var drawCount = `<h3> Draw Pile: <span id="drawCount"></span> </h3>`;
-  $("#drawHolder").append(draw);
-  $("#drawHolder").append(drawCount);
+    var drawCount = `<h3> Draw Pile: <span id="drawCount"></span> </h3>`;
+    $("#drawHolder").append(draw);
+    $("#drawHolder").append(drawCount);
 
-  var discard = `
+    var discard = `
       <div class="playingCard discard">
       <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
       </div>
       `;
-  var discardCount = `<h3> Discard Pile: <span id="discardCount"></span> </h3>`;
-  $("#discardHolder").append(discard);
-  $("#discardHolder").append(discardCount);
+    var discardCount = `<h3> Discard Pile: <span id="discardCount"></span> </h3>`;
+    $("#discardHolder").append(discard);
+    $("#discardHolder").append(discardCount);
+  }
 
   for (var i = 0; i < 3; i++) {
-    drawCard();
+    drawCard(team);
   }
-  UpdateCardsKeyWords();
+
+  UpdateCardsKeyWords(team);
 }
 
-function drawCard() {
-  if (matchData.draw.length == 0) {
-    shuffleDiscardToDraw();
+function drawCard(team) {
+  var usingData = checkPlayerTurn(team);
+
+  if (usingData.draw.length == 0) {
+    shuffleDiscardToDraw(usingData);
   }
 
-  var card = matchData.draw[0];
-  card.cardPosition = $(".hand").length;
-
   //add card to hand
-  matchData.draw.splice(0, 1);
-  matchData.hand.push(card);
+  if (team == userData.team.name) {
+    uiHolder = "handHolder";
+    $("#drawCount").text(userData.draw.length);
+  } else {
+    uiHolder = "opponentHandHolder";
+  }
+
+  var card = usingData.draw[0];
+  usingData.draw.splice(0, 1);
+  usingData.hand.push(card);
+  card.cardPosition = $("#" + uiHolder + " .hand").length;
 
   var playCardStatus = true;
   card.playable.forEach((check) => {
-    var canPlayCard = checkCardIsPlayable(check);
+    var canPlayCard = checkCardIsPlayable(check, usingData.team.name);
     if (canPlayCard.reason) {
       playCardStatus = canPlayCard.reason;
     }
@@ -327,25 +329,26 @@ function drawCard() {
     playable = "unplayable";
   }
 
-  $(renderCard("Card", card, playable))
-    .appendTo("#handHolder")
+  $(renderCard("Card", card, playable, usingData.team.name))
+    .appendTo("#" + uiHolder)
     .hide()
     .fadeIn("slow");
-  $(".hand").last().data("card", card);
-  $("#drawCount").text(matchData.draw.length);
+  $("#" + uiHolder + " .hand")
+    .last()
+    .data("card", card);
 }
 
-$(".draw").on("click", function () {
+$("#drawHolder").on("click", function () {
   //dont show draw pile in order
-  console.table(shuffleArray(matchData.draw));
+  console.table(shuffleArray(userData.draw));
 });
 
-$(".discard").on("click", function () {
-  console.table(matchData.discard);
+$("#discardHolder").on("click", function () {
+  console.table(userData.discard);
 });
 
 $(".endButton").on("click", function () {
-  endTurn();
+  endTurn(userData.team.name);
 });
 
 $(".alilityButton").on("click", function () {
@@ -359,12 +362,12 @@ $(".alilityButton").on("click", function () {
     return;
   }
 
-  var playerPos = getPlayerPositions();
+  var playerPos = getPlayerPositions(userData.team.name);
 
   playerPos.forEach((position) => {
     //get players with abilities
     // prettier-ignore
-    player = matchData.gamePitch[position.row][position.col].find((player) => player.team == "player1" && player.player.ability);
+    player = matchData.gamePitch[position.row][position.col].find((player) => player.team == userData.team.name && player.player.ability);
 
     if (player) {
       // prettier-ignore
@@ -372,7 +375,6 @@ $(".alilityButton").on("click", function () {
       cell.css("background-color", "lightgreen");
       cell.data("playerData", player);
       //show ability on hover
-      console.log(player);
       cell.jBox("Tooltip", {
         content: player.player.ability,
       });
@@ -400,7 +402,7 @@ $(".alilityButton").on("click", function () {
           tempCard.appliesTo = [rowIndex, cellIndex];
         }
 
-        playCard(null, tempCard);
+        playCard(null, tempCard, userData.team.name);
 
         //ability used
         alilityButton.html("Alility has be used");
@@ -415,16 +417,16 @@ $(".alilityButton").on("click", function () {
   alilityButton.html("Cancel");
 });
 
-function activateAbility(card) {
+function activateAbility(card, teamIdentifier) {
   ability = Object.keys(card.ability)[matchData.abilityCount];
   val = Object.values(card.ability)[matchData.abilityCount];
   matchData.playingAbility = true;
   matchData.abilityCount++;
   var ballPos = getBallPosition();
-  var playerPos = getPlayerPositions();
+  var playerPos = getPlayerPositions(teamIdentifier);
 
   try {
-    UpdateCardsKeyWords();
+    UpdateCardsKeyWords(teamIdentifier);
   } catch {}
 
   switch (ability) {
@@ -483,7 +485,7 @@ function activateAbility(card) {
 
               //get player passing stats
               // prettier-ignore
-              var player = matchData.gamePitch[row][cellIndex].find((player) => player.team == "player1");
+              var player = matchData.gamePitch[row][cellIndex].find((player) => player.team == teamIdentifier);
               var randPassChance = Math.floor(Math.random() * 100);
 
               //move the ball
@@ -505,7 +507,7 @@ function activateAbility(card) {
                 missedPassOptions = 2;
 
                 // prettier-ignore
-                markingPlayer = matchData.gamePitch[dirRow][dirCellIndex].find((player) =>{return player.team == "cpu"});
+                markingPlayer = matchData.gamePitch[dirRow][dirCellIndex].find((player) =>{return player.team != teamIdentifier && player.team != "ball"});
                 //player is marked
                 if (markingPlayer) {
                   missedPassOptions = 3;
@@ -566,11 +568,11 @@ function activateAbility(card) {
                   matchData.gamePitch[dirRow][dirCellIndex].push({
                     team: "ball",
                   });
-                  endTurn();
+                  endTurn(teamIdentifier);
                 }
               }
 
-              activateAbility(card);
+              activateAbility(card, teamIdentifier);
             });
           }
         });
@@ -585,7 +587,7 @@ function activateAbility(card) {
       matchData.gamePitch[ballPos.row][ballPos.col] = matchData.gamePitch[ballPos.row][ballPos.col].filter((player) => player.team != "ball");
       //add ball to destination index
       matchData.gamePitch["mid"][ballPos.col].push({ team: "ball" });
-      activateAbility(card);
+      activateAbility(card, teamIdentifier);
       break;
     case "Move":
       if (card.appliesTo) {
@@ -598,7 +600,7 @@ function activateAbility(card) {
         //only apply movement to marked players
         playerPos.forEach((position) => {
           // prettier-ignore
-          if(matchData.gamePitch[position.row][position.col].find((player) => player.team == "cpu")){
+          if(matchData.gamePitch[position.row][position.col].find((player) => player.team != teamIdentifier && player.team != "ball" )){
               // prettier-ignore
               cell = $("#pitch tr:eq(" +pitchToCell(position.row) +") td:eq(" +position.col +")");
               cell.css("background-color", "lightgreen");
@@ -626,26 +628,28 @@ function activateAbility(card) {
         //get position
         var cellIndex = playerElem.closest("td")[0].cellIndex;
         var rowIndex = playerElem.closest("td")[0].parentNode.rowIndex;
-
         var directions = [];
 
         for (var i = 1; i < val + 1; i++) {
           // prettier-ignore
-          directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'));
+          if((cellIndex+i) <= 5 ){
+              directions.push( forward = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex+i)+')'));
+          }
 
           // prettier-ignore
           if((rowIndex+i) <= 2 ){
               directions.push( down = $('#pitch tr:eq('+(rowIndex+i)+') td:eq('+(cellIndex)+')'));
-            }
+          }
 
           // prettier-ignore
           if((cellIndex-i)  >= 0){
               directions.push( back = $('#pitch tr:eq('+(rowIndex)+') td:eq('+(cellIndex-i)+')'));
-            }
+          }
+
           // prettier-ignore
           if((rowIndex-i) >= 0 ){
               directions.push( up = $('#pitch tr:eq('+(rowIndex-i)+') td:eq('+(cellIndex)+')'));
-            }
+          }
         }
 
         directions.forEach((dir) => {
@@ -657,7 +661,7 @@ function activateAbility(card) {
 
           //make sure space has no teammate in it
           // prettier-ignore
-          var player = matchData.gamePitch[dirRow][dirCellIndex].find((player) => {return player.team == "player1";});
+          var player = matchData.gamePitch[dirRow][dirCellIndex].find((player) => {return player.team == teamIdentifier;});
 
           if (!player) {
             //add effets
@@ -678,10 +682,10 @@ function activateAbility(card) {
 
                 //get player
                 // prettier-ignore
-                var player = matchData.gamePitch[row][cellIndex].find((player) =>{return player.team == "player1"});
+                var player = matchData.gamePitch[row][cellIndex].find((player) =>{return player.team == teamIdentifier});
                 //remove player from current index
                 // prettier-ignore
-                matchData.gamePitch[row][cellIndex] = matchData.gamePitch[row][cellIndex].filter((player) => player.team != "player1");
+                matchData.gamePitch[row][cellIndex] = matchData.gamePitch[row][cellIndex].filter((player) => player.team != teamIdentifier);
 
                 //add playerto destination index
                 var dirCellIndex = dir.closest("td")[0].cellIndex;
@@ -698,7 +702,7 @@ function activateAbility(card) {
                   matchData.gamePitch[dirRow][dirCellIndex].push(hasBall);
                 }
 
-                activateAbility(card);
+                activateAbility(card, teamIdentifier);
               });
             }
           }
@@ -710,34 +714,30 @@ function activateAbility(card) {
     case "Draw":
       //draw val amount of cards cards
       for (var i = 0; i < val; i++) {
-        drawCard();
+        drawCard(teamIdentifier);
       }
-      activateAbility(card);
+      activateAbility(card, teamIdentifier);
       break;
     case "Discard":
       if (val == 100) {
-        discardHand(card);
+        discardHand(card, teamIdentifier);
       } else {
         //discard val amount of cards cards
         for (var i = 0; i < val; i++) {
           //TODO: make for random discard and selected discard
         }
       }
-      activateAbility(card);
+      activateAbility(card, teamIdentifier);
       break;
     case "Shoot":
       var randGoalChance = Math.floor(Math.random() * 100);
-      var goalSuccess = getGoalChance();
-      //console.log("chance of scoring | ", "value needed to score");
-      //console.log(goalSuccess, randGoalChance);
+      var goalSuccess = getGoalChance(teamIdentifier);
 
       if (goalSuccess >= randGoalChance) {
         commentate("Shoots... GOAL");
-        matchData.playerScore++;
-        $("#playerScore").html(matchData.playerScore);
 
         player = matchData.gamePitch[ballPos.row][ballPos.col].find(
-          (player) => player.team == "player1"
+          (player) => player.team == teamIdentifier
         );
         var goalModal = new jBox("Modal", {
           title: "GOAL!",
@@ -747,11 +747,19 @@ function activateAbility(card) {
         });
         goalModal.open();
 
-        endTurn();
+        endTurn(teamIdentifier);
 
         //players move back to formation & give opponent
         resetPitch();
-        matchData.gamePitch.mid["3"].push({ team: "ball" });
+        if (teamIdentifier == userData.team.name) {
+          matchData.playerScore++;
+          $("#playerScore").html(matchData.playerScore);
+          matchData.gamePitch.mid["3"].push({ team: "ball" });
+        } else {
+          matchData.cpuScore++;
+          $("#cpuScore").html(matchData.cpuScore);
+          matchData.gamePitch.mid["2"].push({ team: "ball" });
+        }
       } else {
         if (goalSuccess > 50) {
           //if success chance was better than 50
@@ -783,9 +791,14 @@ function activateAbility(card) {
               //give ball to goalkeeper
               // prettier-ignore
               matchData.gamePitch[ballPos.row][ballPos.col] = matchData.gamePitch[ballPos.row][ballPos.col].filter((player) => player.team != "ball");
-              matchData.gamePitch.mid["5"].push({ team: "ball" });
 
-              endTurn();
+              if (teamIdentifier == userData.team.name) {
+                matchData.gamePitch.mid["5"].push({ team: "ball" });
+              } else {
+                matchData.gamePitch.mid["0"].push({ team: "ball" });
+              }
+
+              endTurn(teamIdentifier);
               break;
             default:
               break;
@@ -795,21 +808,27 @@ function activateAbility(card) {
           //players move back to formation
           commentate("Shoots... Missed \nGoalkick");
           resetPitch();
-          matchData.gamePitch.mid["5"].push({ team: "ball" });
-          endTurn();
+
+          if (teamIdentifier == userData.team.name) {
+            matchData.gamePitch.mid["5"].push({ team: "ball" });
+          } else {
+            matchData.gamePitch.mid["0"].push({ team: "ball" });
+          }
+
+          endTurn(teamIdentifier);
         }
       }
 
-      activateAbility(card);
+      activateAbility(card, teamIdentifier);
       break;
     case "StatChange":
       //Stat changing card
       //for each change
       val.forEach((change) => {
-        updateStatChange(change);
+        updateStatChange(change, teamIdentifier);
       });
 
-      activateAbility(card);
+      activateAbility(card, teamIdentifier);
       break;
     default:
       //finished running card abilities
@@ -819,7 +838,7 @@ function activateAbility(card) {
   }
 }
 
-function playCard(elem, setCard) {
+function playCard(elem, setCard, teamIdentifier) {
   if (!matchData.playingAbility) {
     var card;
     if (elem) {
@@ -830,7 +849,7 @@ function playCard(elem, setCard) {
 
     var playCardStatus = true;
     card.playable.forEach((check) => {
-      var canPlayCard = checkCardIsPlayable(check);
+      var canPlayCard = checkCardIsPlayable(check, teamIdentifier);
       if (canPlayCard.reason) {
         playCardStatus = canPlayCard.reason;
       }
@@ -840,28 +859,34 @@ function playCard(elem, setCard) {
       if (elem) {
         //animate card removal
         $(elem).fadeOut("slow", function () {
-          waitForCardToPlay();
+          waitForCardToPlay(card, teamIdentifier);
         });
       } else {
-        waitForCardToPlay();
+        waitForCardToPlay(card, teamIdentifier);
       }
     } else {
       alert("This card is unplayable. \n" + playCardStatus);
     }
   }
 
-  function waitForCardToPlay() {
+  function waitForCardToPlay(card, teamIdentifier) {
     //trigger card's abilities
     matchData.abilityCount = 0;
-    activateAbility(card);
+    activateAbility(card, teamIdentifier);
 
+    usingData = checkPlayerTurn();
     //move to discard pile
     if (card.name != "TempCard") {
-      matchData.hand.splice(card.cardPosition, 1);
-      matchData.discard.push(card);
+      usingData.hand = usingData.hand.filter(
+        (inhand) => inhand.cardPosition != card.cardPosition
+      );
+      usingData.discard.push(card);
 
-      $("#discardCount").text(matchData.discard.length);
-      matchData.matchTime = matchData.matchTime + 4;
+      if (teamIdentifier == userData.team.name) {
+        $("#discardCount").text(usingData.discard.length);
+      }
+
+      matchData.matchTime = matchData.matchTime + 3;
       $("#matchTime").html(matchData.matchTime);
     }
 
@@ -877,42 +902,60 @@ function playCard(elem, setCard) {
   }
 }
 
-function endTurn() {
-  console.log("end turn");
+function endTurn(team) {
   matchData.turnCounter++;
-  updateStatChange();
-  discardHand();
+  updateStatChange(null, team);
+  discardHand(null, team);
   $(".alilityButton").prop("disabled", true);
   $(".endButton").prop("disabled", true);
+
+  if (team == userData.team.name) {
+    opponentTurn();
+  } else {
+    drawHand(userData.team.name);
+    $(".alilityButton").prop("disabled", false);
+    $(".endButton").prop("disabled", false);
+  }
 }
 
-function shuffleDiscardToDraw() {
+function shuffleDiscardToDraw(usingData) {
   //shuffle discard pile back to draw
-  matchData.draw = shuffleArray(matchData.discard);
-  matchData.discard = [];
-  $("#drawCount").text(matchData.draw.length);
-  $("#discardCount").text(matchData.discard.length);
+  usingData.draw = shuffleArray(usingData.discard);
+  usingData.discard = [];
+  if (usingData.team.name == userData.team.name) {
+    $("#drawCount").text(usingData.draw.length);
+    $("#discardCount").text(usingData.discard.length);
+  }
 }
 
-function discardHand(excludeCard) {
-  matchData.hand.forEach((card) => {
+function discardHand(excludeCard, teamIdentifier) {
+  var usingData = checkPlayerTurn(teamIdentifier);
+
+  usingData.hand.forEach((card) => {
     if (card != excludeCard) {
-      matchData.discard.push(card);
+      usingData.discard.push(card);
     }
   });
-  matchData.hand = [];
-  $("#discardCount").text(matchData.discard.length);
-  $(".hand").fadeOut("fast");
+  usingData.hand = [];
+
+  if (teamIdentifier == userData.team.name) {
+    uiHolder = "handHolder";
+    $("#discardCount").text(usingData.discard.length);
+  } else {
+    uiHolder = "opponentHandHolder";
+  }
+
+  $("#" + uiHolder + " .hand").fadeOut("fast");
 }
 
 function getOpposition(teamToFetch) {
-  team = allTeams.find((team) => team.name == teamToFetch);
-  team.players.forEach((player) => {
-    player.team = "cpu";
-    player.colorPrimary = team.colorPrimary;
-    player.colorAccent = team.colorAccent;
+  foundTeam = allTeams.find((team) => team.name == teamToFetch);
+  foundTeam.players.forEach((player) => {
+    player.team = foundTeam.name;
+    player.colorPrimary = foundTeam.colorPrimary;
+    player.colorAccent = foundTeam.colorAccent;
   });
-  return team;
+  return { team: foundTeam };
 }
 
 function addPlayersToPitch(oppositionFormation) {
@@ -993,7 +1036,11 @@ function getPlayerIcon(player) {
 function sortPlayerIcons(cell) {
   //display icons in this order in the cell
   var ordering = {};
-  var sortOrder = ["player1", "ball", "cpu"];
+  var sortOrder = [
+    userData.team.name,
+    "ball",
+    matchData.oppositionData.team.name,
+  ];
   for (var i = 0; i < sortOrder.length; i++) ordering[sortOrder[i]] = i;
 
   cell.sort(function (a, b) {
@@ -1003,21 +1050,40 @@ function sortPlayerIcons(cell) {
   return cell;
 }
 
-function UpdateCardsKeyWords() {
+function UpdateCardsKeyWords(team) {
+  var usingData = checkPlayerTurn(team);
+  var uiHolder;
+
+  if (team == userData.team.name) {
+    uiHolder = "handHolder";
+  } else {
+    uiHolder = "opponentHandHolder";
+  }
+
   //check each card in the hand for keyWords and update
-  matchData.hand.forEach((card) => {
+  usingData.hand.forEach((card) => {
     var keyWordFound = keyWords.find((v) => card.text.includes(v));
     if (keyWordFound) {
-      var cardText = $($(".cardText")[card.cardPosition]).text();
+      var cardText = $(
+        $("#" + uiHolder + " .cardText")[card.cardPosition]
+      ).text();
 
       switch (keyWordFound) {
         case "GoalChance":
           // prettier-ignore
-          if(getGoalChance() <= 0){
-              $($(".cardText")[card.cardPosition]).text(cardText.replace(keyWordFound, "0%"));
+          if(getGoalChance(team) <= 0){      
+            if(/%/g.test( $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text() )){ //keyword already replaced by %. update by regex instead
+              $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text(cardText.replace(/[0-9]+%/, "0%"))
             }else{
-              $($(".cardText")[card.cardPosition]).text(cardText.replace(keyWordFound, getGoalChance() + "%"));
+              $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text(cardText.replace(keyWordFound, "0%"));
             }
+          }else{
+            if(/%/g.test( $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text() )){
+              $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text(cardText.replace(/[0-9]+%/, getGoalChance(team) + "%"))
+            }else{
+              $($("#" + uiHolder+ " .cardText")[card.cardPosition]).text(cardText.replace(keyWordFound, getGoalChance(team) + "%"));
+            }
+          }
           break;
         default:
           break;
@@ -1027,8 +1093,10 @@ function UpdateCardsKeyWords() {
     abilitiesList.forEach((ability) => {
       var abilityFound = card.text.includes(ability);
       if (abilityFound) {
-        var cardText = $($(".cardText")[card.cardPosition]).html();
-        $($(".cardText")[card.cardPosition]).html(
+        var cardText = $(
+          $("#" + uiHolder + " .cardText")[card.cardPosition]
+        ).html();
+        $($("#" + uiHolder + " .cardText")[card.cardPosition]).html(
           cardText.replace(
             ability,
             "<span style='color:#1769eb'>" + ability + "</span>"
@@ -1036,6 +1104,32 @@ function UpdateCardsKeyWords() {
         );
       }
     });
+
+    // up date playable ui indicator
+    $("#" + uiHolder + " .cardText")[
+      card.cardPosition
+    ].parentNode.parentNode.classList.remove("playable");
+    $("#" + uiHolder + " .cardText")[
+      card.cardPosition
+    ].parentNode.parentNode.classList.remove("unplayable");
+
+    var playCardStatus = true;
+    card.playable.forEach((check) => {
+      var canPlayCard = checkCardIsPlayable(check, team);
+      if (canPlayCard.reason) {
+        playCardStatus = canPlayCard.reason;
+      }
+    });
+
+    var playable = "";
+    if (playCardStatus == true) {
+      playable = "playable";
+    } else {
+      playable = "unplayable";
+    }
+    $("#" + uiHolder + " .cardText")[
+      card.cardPosition
+    ].parentNode.parentNode.classList.add(playable);
   });
 }
 
@@ -1054,12 +1148,12 @@ function getBallPosition() {
   return ballPos;
 }
 
-function getPlayerPositions() {
+function getPlayerPositions(teamIdentifier) {
   var playerPos = [];
 
   $.each(matchData.gamePitch, function (topKey, topValue) {
     $.each(topValue, function (key, value) {
-      if (value.some((player) => player.team === "player1")) {
+      if (value.some((player) => player.team === teamIdentifier)) {
         playerPos.push({ row: topKey, col: parseInt(key) });
       }
     });
@@ -1068,12 +1162,13 @@ function getPlayerPositions() {
   return playerPos;
 }
 
-function getGoalChance() {
+function getGoalChance(teamIdentifier) {
   var ballPos = getBallPosition();
   var goalSuccess = 100;
+  var oppositeTeam = getOppositeTeamTurn(teamIdentifier);
 
   // prettier-ignore
-  markingPlayer = matchData.gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "cpu"});
+  markingPlayer = matchData.gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == oppositeTeam.team.name});
   //player is marked
   if (markingPlayer) {
     //take defenders defend stat and remove success chance by that much.
@@ -1082,10 +1177,10 @@ function getGoalChance() {
 
   //get the goalkeeper stats
   // prettier-ignore
-  goalSuccess = goalSuccess - (oppositionData.players.find((player) =>{return player.player.position == "Goalkeeper"}).player.defence);
+  goalSuccess = goalSuccess - (oppositeTeam.team.players.find((player) =>{return player.player.position == "Goalkeeper"}).player.defence);
 
   // prettier-ignore
-  attackingPlayer = matchData.gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == "player1"});
+  attackingPlayer = matchData.gamePitch[ballPos.row][ballPos.col].find((player) =>{return player.team == teamIdentifier});
   if (attackingPlayer) {
     //take attackers attack stat and add success chance by that much.
     goalSuccess = goalSuccess + attackingPlayer.player.attack;
@@ -1100,34 +1195,59 @@ function getGoalChance() {
   }
 
   //player distance
-  switch (ballPos.col) {
-    case 0:
-      goalSuccess = goalSuccess - 99;
-      break;
-    case 1:
-      goalSuccess = goalSuccess - 90;
-      break;
-    case 2:
-      goalSuccess = goalSuccess - 80;
-      break;
-    case 3:
-      goalSuccess = goalSuccess - 70;
-      break;
-    case 4:
-      goalSuccess = goalSuccess - 60;
-      break;
-    case 5:
-      goalSuccess = goalSuccess - 50;
-      break;
-    default:
-      break;
+  if (teamIdentifier == userData.team.name) {
+    switch (ballPos.col) {
+      case 0:
+        goalSuccess = goalSuccess - 99;
+        break;
+      case 1:
+        goalSuccess = goalSuccess - 90;
+        break;
+      case 2:
+        goalSuccess = goalSuccess - 80;
+        break;
+      case 3:
+        goalSuccess = goalSuccess - 70;
+        break;
+      case 4:
+        goalSuccess = goalSuccess - 60;
+        break;
+      case 5:
+        goalSuccess = goalSuccess - 50;
+        break;
+      default:
+        break;
+    }
+  } else {
+    switch (ballPos.col) {
+      case 5:
+        goalSuccess = goalSuccess - 99;
+        break;
+      case 4:
+        goalSuccess = goalSuccess - 90;
+        break;
+      case 3:
+        goalSuccess = goalSuccess - 80;
+        break;
+      case 2:
+        goalSuccess = goalSuccess - 70;
+        break;
+      case 1:
+        goalSuccess = goalSuccess - 60;
+        break;
+      case 0:
+        goalSuccess = goalSuccess - 50;
+        break;
+      default:
+        break;
+    }
   }
 
   return goalSuccess;
 }
 
-function updateStatChange(newChange) {
-  var playerPos = getPlayerPositions();
+function updateStatChange(newChange, teamIdentifier) {
+  var playerPos = getPlayerPositions(teamIdentifier);
 
   //new stat change
   if (newChange) {
@@ -1138,7 +1258,7 @@ function updateStatChange(newChange) {
     commentate("The manager's words seems to have influenced the game");
     playerPos.forEach((position) => {
       // prettier-ignore
-      player = matchData.gamePitch[position.row][position.col].find((player) => player.team == "player1");
+      player = matchData.gamePitch[position.row][position.col].find((player) => player.team == teamIdentifier);
       if (newChange.type == "positive") {
         player.player[changeTo] = player.player[changeTo] + changeVal;
       } else {
@@ -1157,7 +1277,7 @@ function updateStatChange(newChange) {
       if (oldChange.endOnTurn == matchData.turnCounter) {
         playerPos.forEach((position) => {
           // prettier-ignore
-          player = matchData.gamePitch[position.row][position.col].find((player) => player.team == "player1");
+          player = matchData.gamePitch[position.row][position.col].find((player) => player.team == teamIdentifier);
           if (oldChange.type == "positive") {
             player.player[changeTo] = player.player[changeTo] - changeVal;
           } else {
@@ -1211,13 +1331,13 @@ function commentate(message) {
 }
 
 /* Playablity functions */
-function checkCardIsPlayable(check) {
+function checkCardIsPlayable(check, teamIdentifier) {
   var ballPos = getBallPosition();
 
   switch (check) {
     case "PlayerHasBall":
       // prettier-ignore
-      if (matchData.gamePitch[ballPos.row][ballPos.col].some(player => player.team === 'player1')) {
+      if (matchData.gamePitch[ballPos.row][ballPos.col].some(player => player.team === teamIdentifier)) {
           return { status: true };
         } else {
             return {
@@ -1228,7 +1348,7 @@ function checkCardIsPlayable(check) {
       break;
     case "PlayerNotHaveBall":
       // prettier-ignore
-      if (matchData.gamePitch[ballPos.row][ballPos.col].some(player => player.team != 'player1')) {
+      if (matchData.gamePitch[ballPos.row][ballPos.col].some(player => player.team != teamIdentifier)) {
           return { status: true };
         } else {
             return {
@@ -1249,12 +1369,12 @@ function checkCardIsPlayable(check) {
         }
       break;
     case "Marked":
-      var playerPos = getPlayerPositions();
+      var playerPos = getPlayerPositions(teamIdentifier);
       var marked = false;
 
       playerPos.forEach((position) => {
         // prettier-ignore
-        if(matchData.gamePitch[position.row][position.col].find((player) => player.team == "cpu")){
+        if(matchData.gamePitch[position.row][position.col].find((player) => player.team != teamIdentifier && player.team != "ball")){
           marked = true;
           }
       });
@@ -1299,7 +1419,7 @@ function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function renderCard(type, data, playable) {
+function renderCard(type, data, playable, teamIdentifier) {
   html = "";
 
   switch (type) {
@@ -1309,7 +1429,9 @@ function renderCard(type, data, playable) {
         html +=
           `<div class="playingCard hand ` +
           playable +
-          `"  onclick="playCard(this)">
+          `"  onclick="playCard(this, null, '` +
+          teamIdentifier +
+          `')">
           <img src="https://picsum.photos/200/200" alt="Avatar" style="width:100%">
           <div>
           <h4><b> ` +
@@ -1362,4 +1484,26 @@ function renderCard(type, data, playable) {
   }
 
   return html;
+}
+
+function checkPlayerTurn(teamIdentifier) {
+  var usingData;
+  if (teamIdentifier == userData.team.name) {
+    usingData = userData;
+  } else {
+    usingData = matchData.oppositionData;
+  }
+
+  return usingData;
+}
+
+function getOppositeTeamTurn(teamIdentifier) {
+  var usingData;
+  if (teamIdentifier == userData.team.name) {
+    usingData = matchData.oppositionData;
+  } else {
+    usingData = userData;
+  }
+
+  return usingData;
 }

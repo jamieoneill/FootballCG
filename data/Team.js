@@ -6,7 +6,8 @@ class Team {
     points,
     players,
     colorAccent,
-    colorPrimary
+    colorPrimary,
+    cards
   ) {
     this.name = name;
     this.rating = rating;
@@ -15,6 +16,7 @@ class Team {
     this.players = players;
     this.colorAccent = colorAccent;
     this.colorPrimary = colorPrimary;
+    this.cards = cards;
   }
 }
 
@@ -32,7 +34,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#97c1e7"
+    "#97c1e7",
+    cloneCards()
   ),
   new Team(
     "Liverpool",
@@ -47,7 +50,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#dd0000"
+    "#dd0000",
+    cloneCards()
   ),
   new Team(
     "Manchester United",
@@ -62,7 +66,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#ffe500",
-    "#e80909"
+    "#e80909",
+    cloneCards()
   ),
   new Team(
     "Chelsea",
@@ -77,7 +82,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#034694"
+    "#034694",
+    cloneCards()
   ),
   new Team(
     "Leicester",
@@ -92,7 +98,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#0101e8"
+    "#0101e8",
+    cloneCards()
   ),
   new Team(
     "Tottenham",
@@ -107,7 +114,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#132257",
-    "#fff"
+    "#fff",
+    cloneCards()
   ),
   new Team(
     "Wolverhampton",
@@ -122,7 +130,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#000000",
-    "#fdbc02"
+    "#fdbc02",
+    cloneCards()
   ),
   new Team(
     "Arsenal",
@@ -137,7 +146,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#ff0000"
+    "#ff0000",
+    cloneCards()
   ),
   new Team(
     "Sheffield United",
@@ -152,7 +162,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#ec2227",
-    "#fff"
+    "#fff",
+    cloneCards()
   ),
   new Team(
     "Burnley",
@@ -161,13 +172,14 @@ allTeams = [
     0,
     [
       { player: myPlayer5, position: "" },
-      { player: myPlayer, position: "mid:3" },
-      { player: myPlayer2, position: "mid:4" },
-      { player: myPlayer3, position: "top:4" },
-      { player: myPlayer4, position: "bottom:4" },
+      { player: myPlayer4, position: "mid:3" },
+      { player: myPlayer, position: "mid:4" },
+      { player: myPlayer2, position: "top:4" },
+      { player: myPlayer3, position: "bottom:4" },
     ],
     "#80bfff",
-    "#800000"
+    "#800000",
+    cloneCards()
   ),
   new Team(
     "Southampton",
@@ -182,7 +194,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#ff0000"
+    "#ff0000",
+    cloneCards()
   ),
   new Team(
     "Everton",
@@ -197,7 +210,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#0d00e9"
+    "#0d00e9",
+    cloneCards()
   ),
   new Team(
     "Newcastle",
@@ -212,7 +226,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#000000",
-    "#fff"
+    "#fff",
+    cloneCards()
   ),
   new Team(
     "Crystal Palace",
@@ -227,7 +242,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#c4122e",
-    "#27409b"
+    "#27409b",
+    cloneCards()
   ),
   new Team(
     "Brighton",
@@ -242,7 +258,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#005daa"
+    "#005daa",
+    cloneCards()
   ),
   new Team(
     "West Ham",
@@ -257,7 +274,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#2dafe5",
-    "#7c2c3b"
+    "#7c2c3b",
+    cloneCards()
   ),
   new Team(
     "Aston Villa",
@@ -272,7 +290,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#7b003a",
-    "#a3c5e9"
+    "#a3c5e9",
+    cloneCards()
   ),
   new Team(
     "Leeds United",
@@ -287,7 +306,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#1b449c",
-    "#fff"
+    "#fff",
+    cloneCards()
   ),
   new Team(
     "Fulham",
@@ -302,7 +322,8 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#fff",
-    "#000000"
+    "#000000",
+    cloneCards()
   ),
   new Team(
     "West Brom",
@@ -317,6 +338,21 @@ allTeams = [
       { player: myPlayer4, position: "bottom:4" },
     ],
     "#091453",
-    "#fff"
+    "#fff",
+    cloneCards()
   ),
 ];
+
+function cloneCards() {
+  return [
+    $.extend(true, {}, PushUpCard),
+    $.extend(true, {}, PushUpCard),
+    $.extend(true, {}, PushUpCard),
+    $.extend(true, {}, ShortPassCard),
+    $.extend(true, {}, ShortPassCard),
+    $.extend(true, {}, ShootCard),
+    $.extend(true, {}, CrossCard),
+    $.extend(true, {}, LoseYourManCard),
+    $.extend(true, {}, TacticianCard),
+  ];
+}
